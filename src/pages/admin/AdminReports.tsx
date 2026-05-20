@@ -7,6 +7,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { KpiCard } from '@/components/admin/KpiCard';
 import { ReportsPieChart } from '@/components/admin/ReportsPieChart';
+import { ListEmptyState } from '@/components/shared/ListEmptyState';
 import {
   useExportReport,
   useReportByInstructor,
@@ -122,7 +123,7 @@ export default function AdminReports() {
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Total clases"
           value={summary?.totalSchedules ?? 0}
@@ -148,9 +149,11 @@ export default function AdminReports() {
             isLoading={instructorsLoading}
             rowKey={(r) => r.instructorId}
             emptyState={
-              <p className="py-8 text-center text-body-sm text-surface-500">
-                Sin datos de instructores en este período
-              </p>
+              <ListEmptyState
+                illustration="chart"
+                title="Sin datos en este período"
+                description="No hay clases registradas para los instructores en el rango seleccionado."
+              />
             }
           />
         </section>

@@ -68,7 +68,7 @@ export default function AdminDashboard() {
     <div className="flex flex-col gap-8">
       <PageHeader title="Panel de administración" subtitle="Vista general de la escuela" />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Usuarios activos"
           value={kpis?.activeUsers ?? 0}

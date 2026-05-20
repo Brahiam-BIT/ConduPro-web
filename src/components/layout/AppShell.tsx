@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   CalendarPlus,
@@ -59,6 +59,12 @@ export function AppShell() {
 
   return (
     <div className="min-h-screen bg-surface-100 dark:bg-surface-950">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-primary-600 focus:px-4 focus:py-2 focus:text-body-sm focus:font-semibold focus:text-white focus:shadow-lg"
+      >
+        Saltar al contenido principal
+      </a>
       <Sidebar
         collapsed={collapsed}
         onCollapseToggle={() => setCollapsed((c) => !c)}
@@ -79,6 +85,7 @@ export function AppShell() {
           userEmail={user?.email ?? ''}
           onLogout={() => void logout()}
           currentPath={location.pathname}
+          onNavClick={() => setMobileOpen(false)}
         />
       </MobileDrawer>
 
@@ -89,7 +96,7 @@ export function AppShell() {
         )}
       >
         <MobileNavbar onOpenMenu={() => setMobileOpen(true)} userName={userFullName} />
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 outline-none">
           <div className="mx-auto w-full max-w-7xl">
             <Outlet />
           </div>
@@ -108,6 +115,7 @@ function Sidebar({
   onLogout,
   currentPath,
   mobile = false,
+  onNavClick,
 }: {
   collapsed: boolean;
   onCollapseToggle: () => void;
@@ -117,6 +125,7 @@ function Sidebar({
   onLogout: () => void;
   currentPath: string;
   mobile?: boolean;
+  onNavClick?: () => void;
 }) {
   return (
     <aside
@@ -163,7 +172,7 @@ function Sidebar({
         </button>
       ) : null}
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navegación principal">
         <ul className="space-y-1">
           {items.map((item) => {
             const Icon = item.icon;
@@ -172,6 +181,9 @@ function Sidebar({
               <li key={item.to}>
                 <NavLink
                   to={item.to}
+                  title={collapsed ? item.label : undefined}
+                  aria-label={collapsed ? item.label : undefined}
+                  onClick={onNavClick}
                   className={cn(
                     'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-body-sm font-medium transition-colors duration-150',
                     active
@@ -199,7 +211,7 @@ function Sidebar({
         <div
           className={cn(
             'flex items-center gap-3 rounded-lg p-2',
-            collapsed ? 'justify-center' : 'bg-surface-100/60 dark:bg-surface-800/60',
+            collapsed ? 'flex-col justify-center' : 'bg-surface-100/60 dark:bg-surface-800/60',
           )}
         >
           <Avatar name={userName} size="sm" />
@@ -211,16 +223,14 @@ function Sidebar({
               <p className="truncate text-caption text-surface-500 dark:text-surface-400">{userEmail}</p>
             </div>
           ) : null}
-          {!collapsed ? (
-            <button
-              type="button"
-              onClick={onLogout}
-              aria-label="Cerrar sesión"
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-surface-500 transition-colors hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-500/20 dark:hover:text-error-500"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={onLogout}
+            aria-label="Cerrar sesión"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-surface-500 transition-colors hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-500/20 dark:hover:text-error-500"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
         {!collapsed ? (
           <div className="mt-3 flex items-center justify-between px-2">
@@ -234,7 +244,21 @@ function Sidebar({
 }
 
 function MobileDrawer({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
+  const titleId = useId();
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panelRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   if (!open) return null;
+
   return (
     <div className="fixed inset-0 z-50 flex lg:hidden">
       <div
@@ -242,7 +266,17 @@ function MobileDrawer({ open, onClose, children }: { open: boolean; onClose: () 
         onClick={onClose}
         aria-hidden
       />
-      <div className="relative z-10 animate-slide-down">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="relative z-10 animate-slide-down outline-none"
+      >
+        <span id={titleId} className="sr-only">
+          Menú de navegación
+        </span>
         <button
           type="button"
           onClick={onClose}

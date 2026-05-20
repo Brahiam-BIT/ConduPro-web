@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/shared/Pagination';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { ListEmptyState } from '@/components/shared/ListEmptyState';
 import { UserFormModal } from '@/components/admin/UserFormModal';
 import {
   useAdminUsersList,
@@ -227,9 +228,30 @@ export default function AdminUsers() {
         isLoading={isLoading}
         rowKey={(u) => u.id}
         emptyState={
-          <p className="py-8 text-center text-body-sm text-surface-500">
-            {debouncedSearch ? 'No encontramos usuarios con ese nombre' : 'No hay usuarios registrados'}
-          </p>
+          <ListEmptyState
+            illustration="users"
+            title={
+              debouncedSearch ? 'Sin resultados' : 'No hay usuarios registrados'
+            }
+            description={
+              debouncedSearch
+                ? 'No encontramos usuarios con ese nombre o correo.'
+                : 'Crea el primer usuario para comenzar.'
+            }
+            action={
+              !debouncedSearch ? (
+                <Button
+                  iconLeft={<Plus className="h-4 w-4" />}
+                  onClick={() => {
+                    setEditingUser(null);
+                    setModalOpen(true);
+                  }}
+                >
+                  Crear usuario
+                </Button>
+              ) : undefined
+            }
+          />
         }
       />
 

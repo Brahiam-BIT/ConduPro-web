@@ -1,6 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { cn } from '@/utils/cn';
+import { ListEmptyState } from '@/components/shared/ListEmptyState';
 import { Skeleton } from './Skeleton';
 
 /**
@@ -99,7 +100,12 @@ export function Table<T>({
           className,
         )}
       >
-        {emptyState ?? <DefaultEmptyState />}
+        {emptyState ?? (
+          <ListEmptyState
+            title="No hay resultados"
+            description="Cuando haya información disponible aparecerá aquí."
+          />
+        )}
       </div>
     );
   }
@@ -236,34 +242,6 @@ function TableSkeleton<T>({
             <Skeleton className="h-3 w-2/3" />
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function DefaultEmptyState() {
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 text-center">
-      <svg width="96" height="96" viewBox="0 0 120 120" aria-hidden="true">
-        <defs>
-          <linearGradient id="empty-g" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor="#A78BFA" />
-            <stop offset="100%" stopColor="#F59E0B" />
-          </linearGradient>
-        </defs>
-        <rect x="14" y="22" width="92" height="76" rx="14" fill="url(#empty-g)" opacity="0.18" />
-        <rect x="22" y="32" width="76" height="58" rx="10" stroke="url(#empty-g)" strokeWidth="2.5" fill="none" />
-        <line x1="22" y1="46" x2="98" y2="46" stroke="url(#empty-g)" strokeWidth="2.5" />
-        <circle cx="38" cy="63" r="5" fill="url(#empty-g)" />
-        <line x1="50" y1="63" x2="86" y2="63" stroke="url(#empty-g)" strokeWidth="3" strokeLinecap="round" />
-        <circle cx="38" cy="78" r="5" fill="url(#empty-g)" opacity="0.5" />
-        <line x1="50" y1="78" x2="78" y2="78" stroke="url(#empty-g)" strokeWidth="3" strokeLinecap="round" opacity="0.5" />
-      </svg>
-      <div>
-        <p className="text-heading-sm text-surface-800 dark:text-surface-100">No hay resultados</p>
-        <p className="text-body-sm text-surface-500 dark:text-surface-400">
-          Cuando haya información disponible aparecerá aquí.
-        </p>
       </div>
     </div>
   );

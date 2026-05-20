@@ -6,6 +6,7 @@ import { Table, type TableColumn } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
 import { Pagination } from '@/components/shared/Pagination';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { ListEmptyState } from '@/components/shared/ListEmptyState';
 import { VehicleFormModal } from '@/components/admin/VehicleFormModal';
 import {
   useAdminVehiclesList,
@@ -139,9 +140,22 @@ export default function AdminVehicles() {
         isLoading={isLoading}
         rowKey={(v) => v.id}
         emptyState={
-          <p className="py-8 text-center text-body-sm text-surface-500">
-            No hay vehículos registrados. Agrega el primero a la flota.
-          </p>
+          <ListEmptyState
+            illustration="car"
+            title="No hay vehículos registrados"
+            description="Agrega el primer vehículo a la flota de la escuela."
+            action={
+              <Button
+                iconLeft={<Plus className="h-4 w-4" />}
+                onClick={() => {
+                  setEditingVehicle(null);
+                  setModalOpen(true);
+                }}
+              >
+                Agregar vehículo
+              </Button>
+            }
+          />
         }
       />
 

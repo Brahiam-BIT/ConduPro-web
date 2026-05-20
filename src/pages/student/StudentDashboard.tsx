@@ -90,10 +90,10 @@ export default function StudentDashboard() {
       ) : null}
 
       {/* KPI grid */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading ? (
           <>
-            <Card variant="elevated" className="sm:col-span-2 xl:col-span-2">
+            <Card variant="elevated" className="sm:col-span-2 lg:col-span-2">
               <Skeleton className="h-28 w-full rounded-lg" />
             </Card>
             <MetricCardSkeleton />
@@ -102,7 +102,7 @@ export default function StudentDashboard() {
           </>
         ) : (
           <>
-            <div className="sm:col-span-2 xl:col-span-2">
+            <div className="sm:col-span-2 lg:col-span-2">
               {data?.nextClass ? (
                 <NextClassCard schedule={data.nextClass} />
               ) : (
