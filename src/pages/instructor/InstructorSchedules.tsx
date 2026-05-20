@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { ScheduleTableActions } from '@/components/shared/ScheduleTableActions';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { ScheduleDetailModal } from '@/components/shared/ScheduleDetailModal';
@@ -23,7 +23,7 @@ import {
 } from '@/constants/schedules';
 import { formatDate, formatTime } from '@/utils/formatDate';
 import { canCompleteSchedule, formatStudentName } from '@/utils/instructor';
-import { toApiDate } from '@/utils/schedule';
+import { canCancelSchedule, toApiDate } from '@/utils/schedule';
 import type { Schedule, ScheduleStatus, ScheduleType } from '@/types/schedule.types';
 
 const PAGE_SIZE = 10;
@@ -38,6 +38,7 @@ export default function InstructorSchedules() {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [actionTargetId, setActionTargetId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
   const filters: ScheduleListFilters = useMemo(
@@ -90,36 +91,37 @@ export default function InstructorSchedules() {
     {
       key: 'actions',
       header: 'Acciones',
-      align: 'right',
-      cell: (r) =>
-        canCompleteSchedule(r) ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedId(r.id);
-              setConfirmAction('complete');
-            }}
-          >
-            Completar
-          </Button>
-        ) : null,
+      align: 'center',
+      className: 'w-44',
+      cell: (r) => (
+        <ScheduleTableActions
+          showComplete={canCompleteSchedule(r)}
+          showCancel={canCancelSchedule(r)}
+          onComplete={() => {
+            setActionTargetId(r.id);
+            setConfirmAction('complete');
+          }}
+          onCancel={() => {
+            setActionTargetId(r.id);
+            setConfirmAction('cancel');
+          }}
+        />
+      ),
     },
   ];
 
   const handleConfirm = async () => {
-    if (!selectedId || !confirmAction) return;
+    if (!actionTargetId || !confirmAction) return;
     try {
       if (confirmAction === 'complete') {
-        await completeMutation.mutateAsync({ id: selectedId, status: 'COMPLETED' });
+        await completeMutation.mutateAsync({ id: actionTargetId, status: 'COMPLETED' });
         toast.success('Clase completada', 'La clase fue marcada como completada.');
       } else {
-        await cancelMutation.mutateAsync(selectedId);
+        await cancelMutation.mutateAsync(actionTargetId);
         toast.success('Clase cancelada', 'La clase fue cancelada correctamente.');
       }
       setConfirmAction(null);
-      setSelectedId(null);
+      setActionTargetId(null);
     } catch (error) {
       toast.error('Error', extractApiErrorMessage(error));
     }
@@ -209,20 +211,19 @@ export default function InstructorSchedules() {
       ) : null}
 
       <ScheduleDetailModal
-        open={!!selectedId && !confirmOpen}
+        open={!!selectedId}
         onClose={() => setSelectedId(null)}
         schedule={detailSchedule ?? null}
         isLoading={detailLoading}
         viewer="instructor"
-        onCancel={() => setConfirmAction('cancel')}
-        isCancelling={cancelMutation.isPending}
-        onComplete={() => setConfirmAction('complete')}
-        isCompleting={completeMutation.isPending}
       />
 
       <ConfirmDialog
         open={confirmOpen}
-        onClose={() => setConfirmAction(null)}
+        onClose={() => {
+          setConfirmAction(null);
+          setActionTargetId(null);
+        }}
         onConfirm={handleConfirm}
         title={confirmConfig.title}
         description={confirmConfig.description}

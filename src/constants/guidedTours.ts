@@ -105,9 +105,9 @@ export const GUIDED_TOURS: GuidedTourDefinition[] = [
           'Lista todas las clases asignadas a ti. Abre el detalle con un clic en la fila.',
       },
       {
-        title: 'Completar o cancelar',
+        title: 'Acciones en la tabla',
         content:
-          'Cuando impartas la clase, márcala como completada. Solo las pendientes o confirmadas pueden cancelarse o completarse.',
+          'Usa los botones Completar o Cancelar en la columna Acciones. El detalle de la clase solo se abre al hacer clic en la fila.',
       },
     ],
   },
