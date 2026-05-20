@@ -76,5 +76,5 @@ en una sola pantalla.
 2. **Fase 2 — Autenticación** ✅
 3. **Fase 3 — Vistas del estudiante** ✅
 4. **Fase 4 — Vistas del instructor** ✅
-5. **Fase 5 — Panel del administrador**
+5. **Fase 5 — Panel del administrador** ✅
 6. **Fase 6 — Polish, responsive, PWA, accesibilidad**

@@ -7,21 +7,27 @@ import { formatDate, formatTime } from '@/utils/formatDate';
 import { formatDuration } from '@/utils/formatters';
 import { canCancelSchedule, formatInstructorName } from '@/utils/schedule';
 import { canCompleteSchedule, formatStudentName } from '@/utils/instructor';
+import { Select } from '@/components/ui/Select';
+import { SCHEDULE_STATUS_FILTER_OPTIONS } from '@/constants/schedules';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from './StatusBadge';
 import type { ReactNode } from 'react';
-import type { Schedule } from '@/types/schedule.types';
+import type { Schedule, ScheduleStatus } from '@/types/schedule.types';
 
 interface ScheduleDetailModalProps {
   open: boolean;
   onClose: () => void;
   schedule: Schedule | null;
   isLoading?: boolean;
-  /** Vista estudiante (instructor) o instructor (estudiante). */
-  viewer?: 'student' | 'instructor';
+  /** Vista estudiante, instructor o admin (ambos participantes). */
+  viewer?: 'student' | 'instructor' | 'admin';
   onCancel?: () => void;
   isCancelling?: boolean;
   onComplete?: () => void;
   isCompleting?: boolean;
+  /** Solo admin: cambiar estado desde el modal. */
+  statusValue?: ScheduleStatus;
+  onStatusChange?: (status: ScheduleStatus) => void;
+  isUpdatingStatus?: boolean;
 }
 
 function DetailRow({
@@ -56,10 +62,14 @@ export function ScheduleDetailModal({
   isCancelling = false,
   onComplete,
   isCompleting = false,
+  statusValue,
+  onStatusChange,
+  isUpdatingStatus = false,
 }: ScheduleDetailModalProps) {
   const showCancel = schedule && onCancel && canCancelSchedule(schedule);
   const showComplete =
     viewer === 'instructor' && schedule && onComplete && canCompleteSchedule(schedule);
+  const showStatusSelect = viewer === 'admin' && schedule && onStatusChange && statusValue;
 
   return (
     <Modal
@@ -112,33 +122,77 @@ export function ScheduleDetailModal({
             label="Horario"
             value={`${formatTime(schedule.startAt)} – ${formatTime(schedule.endAt)} (${formatDuration(schedule.durationMinutes)})`}
           />
-          <DetailRow
-            icon={<User className="h-4 w-4" />}
-            label={viewer === 'instructor' ? 'Estudiante' : 'Instructor'}
-            value={
-              <span className="inline-flex items-center gap-2">
-                {viewer === 'instructor' ? (
-                  <>
+          {viewer === 'admin' ? (
+            <>
+              <DetailRow
+                icon={<User className="h-4 w-4" />}
+                label="Estudiante"
+                value={
+                  <span className="inline-flex items-center gap-2">
                     <Avatar
                       name={formatStudentName(schedule.student)}
                       src={schedule.student.avatarUrl}
                       size="sm"
                     />
                     {formatStudentName(schedule.student)}
-                  </>
-                ) : (
-                  <>
+                  </span>
+                }
+              />
+              <DetailRow
+                icon={<User className="h-4 w-4" />}
+                label="Instructor"
+                value={
+                  <span className="inline-flex items-center gap-2">
                     <Avatar
                       name={formatInstructorName(schedule.instructor)}
                       src={schedule.instructor.avatarUrl}
                       size="sm"
                     />
                     {formatInstructorName(schedule.instructor)}
-                  </>
-                )}
-              </span>
-            }
-          />
+                  </span>
+                }
+              />
+            </>
+          ) : (
+            <DetailRow
+              icon={<User className="h-4 w-4" />}
+              label={viewer === 'instructor' ? 'Estudiante' : 'Instructor'}
+              value={
+                <span className="inline-flex items-center gap-2">
+                  {viewer === 'instructor' ? (
+                    <>
+                      <Avatar
+                        name={formatStudentName(schedule.student)}
+                        src={schedule.student.avatarUrl}
+                        size="sm"
+                      />
+                      {formatStudentName(schedule.student)}
+                    </>
+                  ) : (
+                    <>
+                      <Avatar
+                        name={formatInstructorName(schedule.instructor)}
+                        src={schedule.instructor.avatarUrl}
+                        size="sm"
+                      />
+                      {formatInstructorName(schedule.instructor)}
+                    </>
+                  )}
+                </span>
+              }
+            />
+          )}
+          {showStatusSelect ? (
+            <Select
+              label="Cambiar estado"
+              value={statusValue}
+              onChange={(e) => onStatusChange(e.target.value as ScheduleStatus)}
+              disabled={isUpdatingStatus}
+              options={SCHEDULE_STATUS_FILTER_OPTIONS.filter((o) => o.value !== 'ALL').map(
+                (o) => ({ value: o.value, label: o.label }),
+              )}
+            />
+          ) : null}
           {schedule.vehicle ? (
             <DetailRow
               icon={<Car className="h-4 w-4" />}
