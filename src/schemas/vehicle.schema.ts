@@ -16,7 +16,6 @@ export const vehicleFormSchema = z.object({
     .int('Debe ser un año entero')
     .min(1990, 'Año mínimo 1990')
     .max(currentYear + 1, `Año máximo ${currentYear + 1}`),
-  available: z.boolean(),
 });
 
 export type VehicleFormValues = z.infer<typeof vehicleFormSchema>;

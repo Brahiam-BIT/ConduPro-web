@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { Badge } from '@/components/ui/Badge';
+import { Toggle } from '@/components/ui/Toggle';
 import { Pagination } from '@/components/shared/Pagination';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { ListEmptyState } from '@/components/shared/ListEmptyState';
@@ -11,11 +12,12 @@ import { VehicleFormModal } from '@/components/admin/VehicleFormModal';
 import {
   useAdminVehiclesList,
   useCreateVehicle,
-  useDeleteVehicle,
+  useToggleVehicleAvailable,
   useUpdateVehicle,
 } from '@/hooks/useAdmin';
 import { useToast } from '@/providers/ToastProvider';
 import { extractApiErrorMessage } from '@/lib/axios';
+import { cn } from '@/utils/cn';
 import type { VehicleFormValues } from '@/schemas/vehicle.schema';
 import type { Vehicle } from '@/types/vehicle.types';
 
@@ -26,12 +28,12 @@ export default function AdminVehicles() {
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
+  const [toggleTarget, setToggleTarget] = useState<Vehicle | null>(null);
 
   const { data, isLoading } = useAdminVehiclesList(page);
   const createMutation = useCreateVehicle();
   const updateMutation = useUpdateVehicle();
-  const deleteMutation = useDeleteVehicle();
+  const toggleMutation = useToggleVehicleAvailable();
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
 
@@ -41,28 +43,31 @@ export default function AdminVehicles() {
     { key: 'model', header: 'Modelo', cell: (v) => v.model },
     { key: 'year', header: 'Año', cell: (v) => v.year },
     {
-      key: 'available',
-      header: 'Disponibilidad',
+      key: 'status',
+      header: 'Estado',
       cell: (v) =>
         v.available ? (
           <Badge variant="success" dot size="sm">
-            Disponible
+            Activo
           </Badge>
         ) : (
-          <Badge variant="warning" dot size="sm">
-            No disponible
+          <Badge variant="neutral" dot size="sm">
+            Inactivo
           </Badge>
         ),
     },
     {
       key: 'actions',
       header: 'Acciones',
-      align: 'right',
+      align: 'center',
+      className: 'w-40',
+      mobileLabel: 'Acciones',
       cell: (v) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex items-center justify-center gap-3">
           <Button
             variant="ghost"
             size="sm"
+            className="shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               setEditingVehicle(v);
@@ -71,16 +76,32 @@ export default function AdminVehicles() {
           >
             Editar
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setDeleteTarget(v);
-            }}
+          <div
+            className="inline-flex items-center gap-2"
+            onClick={(e) => e.stopPropagation()}
           >
-            Eliminar
-          </Button>
+            <Toggle
+              size="sm"
+              checked={v.available}
+              aria-label={
+                v.available
+                  ? `Desactivar vehículo ${v.plate}`
+                  : `Activar vehículo ${v.plate}`
+              }
+              disabled={toggleMutation.isPending && toggleTarget?.id === v.id}
+              onChange={() => setToggleTarget(v)}
+            />
+            <span
+              className={cn(
+                'min-w-[3.25rem] text-caption font-semibold',
+                v.available
+                  ? 'text-success-600 dark:text-success-500'
+                  : 'text-surface-500 dark:text-surface-400',
+              )}
+            >
+              {v.available ? 'Activo' : 'Inactivo'}
+            </span>
+          </div>
         </div>
       ),
     },
@@ -95,7 +116,7 @@ export default function AdminVehicles() {
         });
         toast.success('Vehículo actualizado', 'Los cambios se guardaron correctamente.');
       } else {
-        await createMutation.mutateAsync(values);
+        await createMutation.mutateAsync({ ...values, available: true });
         toast.success('Vehículo creado', 'El vehículo fue agregado a la flota.');
       }
       setModalOpen(false);
@@ -105,12 +126,18 @@ export default function AdminVehicles() {
     }
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!deleteTarget) return;
+  const handleToggleConfirm = async () => {
+    if (!toggleTarget) return;
     try {
-      await deleteMutation.mutateAsync(deleteTarget.id);
-      toast.success('Vehículo eliminado', `${deleteTarget.plate} fue eliminado.`);
-      setDeleteTarget(null);
+      await toggleMutation.mutateAsync({
+        id: toggleTarget.id,
+        available: !toggleTarget.available,
+      });
+      toast.success(
+        toggleTarget.available ? 'Vehículo desactivado' : 'Vehículo activado',
+        toggleTarget.plate,
+      );
+      setToggleTarget(null);
     } catch (error) {
       toast.error('Error', extractApiErrorMessage(error));
     }
@@ -120,7 +147,7 @@ export default function AdminVehicles() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Vehículos"
-        subtitle="Inventario y disponibilidad de la flota"
+        subtitle="Inventario de la flota"
         actions={
           <Button
             iconLeft={<Plus className="h-4 w-4" />}
@@ -181,18 +208,22 @@ export default function AdminVehicles() {
       />
 
       <ConfirmDialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteConfirm}
-        title="¿Eliminar vehículo?"
+        open={!!toggleTarget}
+        onClose={() => setToggleTarget(null)}
+        onConfirm={handleToggleConfirm}
+        title={toggleTarget?.available ? '¿Desactivar vehículo?' : '¿Activar vehículo?'}
         description={
-          deleteTarget
-            ? `Se eliminará ${deleteTarget.brand} ${deleteTarget.model} (${deleteTarget.plate}).`
+          toggleTarget
+            ? `${toggleTarget.brand} ${toggleTarget.model} (${toggleTarget.plate}) ${
+                toggleTarget.available
+                  ? 'no estará disponible para clases prácticas.'
+                  : 'volverá a estar disponible para clases prácticas.'
+              }`
             : undefined
         }
-        confirmLabel="Eliminar"
-        variant="danger"
-        isLoading={deleteMutation.isPending}
+        confirmLabel={toggleTarget?.available ? 'Desactivar' : 'Activar'}
+        variant={toggleTarget?.available ? 'danger' : 'primary'}
+        isLoading={toggleMutation.isPending}
       />
     </div>
   );

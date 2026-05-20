@@ -235,10 +235,11 @@ export function useUpdateVehicle() {
   });
 }
 
-export function useDeleteVehicle() {
+export function useToggleVehicleAvailable() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => vehiclesApi.remove(id),
+    mutationFn: ({ id, available }: { id: string; available: boolean }) =>
+      vehiclesApi.update(id, { available }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: adminKeys.all });
     },

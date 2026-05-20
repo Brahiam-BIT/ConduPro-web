@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Toggle } from '@/components/ui/Toggle';
 import { vehicleFormSchema, type VehicleFormValues } from '@/schemas/vehicle.schema';
 import type { Vehicle } from '@/types/vehicle.types';
 
@@ -29,8 +28,6 @@ export function VehicleFormModal({
     register,
     handleSubmit,
     reset,
-    watch,
-    setValue,
     formState: { errors, touchedFields },
   } = useForm<VehicleFormValues>({
     resolver: zodResolver(vehicleFormSchema),
@@ -40,7 +37,6 @@ export function VehicleFormModal({
       brand: '',
       model: '',
       year: new Date().getFullYear(),
-      available: true,
     },
   });
 
@@ -51,7 +47,6 @@ export function VehicleFormModal({
         brand: vehicle.brand,
         model: vehicle.model,
         year: vehicle.year,
-        available: vehicle.available,
       });
     } else if (open && !vehicle) {
       reset({
@@ -59,12 +54,10 @@ export function VehicleFormModal({
         brand: '',
         model: '',
         year: new Date().getFullYear(),
-        available: true,
       });
     }
   }, [open, vehicle, reset]);
 
-  const available = watch('available');
   const showError = (field: keyof VehicleFormValues) =>
     touchedFields[field] ? errors[field]?.message : undefined;
 
@@ -101,11 +94,6 @@ export function VehicleFormModal({
           type="number"
           errorMessage={showError('year')}
           {...register('year')}
-        />
-        <Toggle
-          label="Disponible"
-          checked={available}
-          onChange={(e) => setValue('available', e.target.checked)}
         />
       </form>
     </Modal>

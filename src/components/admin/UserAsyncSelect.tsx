@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import { useUserSearch } from '@/hooks/useAdmin';
 import { cn } from '@/utils/cn';
@@ -22,6 +22,7 @@ export function UserAsyncSelect({
   placeholder = 'Buscar…',
 }: UserAsyncSelectProps) {
   const inputId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [displayName, setDisplayName] = useState('');
@@ -32,10 +33,28 @@ export function UserAsyncSelect({
     if (!value) setDisplayName('');
   }, [value]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
   const options = data?.data ?? [];
 
   return (
-    <div className="relative flex flex-col gap-1.5">
+    <div ref={containerRef} className="relative flex flex-col gap-1.5">
       <label htmlFor={inputId} className="text-label text-surface-700 dark:text-surface-200">
         {label}
       </label>
@@ -54,6 +73,14 @@ export function UserAsyncSelect({
             if (value) onClear?.();
           }}
           onFocus={() => setOpen(true)}
+          onBlur={() => {
+            // Permite clic en una opción antes de cerrar (mousedown en el botón)
+            window.setTimeout(() => {
+              if (!containerRef.current?.contains(document.activeElement)) {
+                setOpen(false);
+              }
+            }, 0);
+          }}
           placeholder={value ? displayName : placeholder}
           className={cn(
             'h-11 w-full rounded-lg border border-surface-300 bg-surface-50 py-2 pl-9 pr-9 text-body-md',
@@ -68,6 +95,7 @@ export function UserAsyncSelect({
             onClick={() => {
               setSearch('');
               setDisplayName('');
+              setOpen(false);
               onClear?.();
             }}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-surface-500 hover:bg-surface-200 dark:hover:bg-surface-800"
@@ -75,12 +103,11 @@ export function UserAsyncSelect({
             <X className="h-4 w-4" />
           </button>
         )}
-      </div>
-      {open && !value && (
-        <ul
-          className="absolute z-20 mt-[4.25rem] max-h-48 w-full overflow-auto rounded-lg border border-surface-200 bg-surface-50 shadow-lg dark:border-surface-800 dark:bg-surface-900"
-          role="listbox"
-        >
+        {open && !value ? (
+          <ul
+            className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-auto rounded-lg border border-surface-200 bg-surface-50 shadow-lg dark:border-surface-800 dark:bg-surface-900"
+            role="listbox"
+          >
           {isFetching ? (
             <li className="px-3 py-2 text-body-sm text-surface-500">Buscando…</li>
           ) : options.length === 0 ? (
@@ -94,6 +121,7 @@ export function UserAsyncSelect({
                     type="button"
                     role="option"
                     className="w-full px-3 py-2 text-left text-body-sm hover:bg-primary-50 dark:hover:bg-primary-500/15"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       onChange(u.id, name);
                       setDisplayName(name);
@@ -108,8 +136,9 @@ export function UserAsyncSelect({
               );
             })
           )}
-        </ul>
-      )}
+          </ul>
+        ) : null}
+      </div>
     </div>
   );
 }
