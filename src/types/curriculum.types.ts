@@ -9,6 +9,8 @@ export interface LicenseCategory {
   groupLabel: string;
   sortOrder: number;
   defaultTheoryCapacity: number;
+  requiredPracticeSessions: number;
+  requiresAllTheoryTopics: boolean;
   isActive: boolean;
   topicCount: number;
   createdAt: string;
@@ -32,6 +34,8 @@ export interface UpdateLicenseCategoryPayload {
   name?: string;
   description?: string;
   defaultTheoryCapacity?: number;
+  requiredPracticeSessions?: number;
+  requiresAllTheoryTopics?: boolean;
   isActive?: boolean;
 }
 

@@ -1,22 +1,21 @@
 import { Link } from 'react-router-dom';
-import { BookOpen, Calendar, CalendarClock, Clock } from 'lucide-react';
+import { BookOpen, Calendar, CalendarClock, Clock, GraduationCap } from 'lucide-react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { NextClassCard } from '@/components/shared/ScheduleCard';
-import { CircularProgress } from '@/components/shared/CircularProgress';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from '@/components/shared/StatusBadge';
 import { ScheduleEmptyState } from '@/components/shared/ScheduleEmptyState';
 import { EMPTY_STUDENT_DASHBOARD } from '@/constants/dashboardDefaults';
+import { LicenseProgressCard } from '@/components/student/LicenseProgressCard';
+import { useMyEnrollments } from '@/hooks/useStudentEnrollments';
 import { useStudentDashboard } from '@/hooks/useStudentSchedules';
 import { formatDate, formatTime } from '@/utils/formatDate';
 import { formatInstructorName } from '@/utils/schedule';
 import { ROUTES } from '@/constants/routes';
 import type { Schedule } from '@/types/schedule.types';
-
-const LICENSE_GOAL_CLASSES = 40;
 
 function MetricCardSkeleton() {
   return (
@@ -29,17 +28,14 @@ function MetricCardSkeleton() {
 
 export default function StudentDashboard() {
   const { data, isLoading, isError } = useStudentDashboard();
+  const { data: enrollments = [], isLoading: enrollmentsLoading } = useMyEnrollments();
   const dashboard = data ?? EMPTY_STUDENT_DASHBOARD;
+  const primaryEnrollment = enrollments.find((e) => e.status === 'ACTIVE');
   const nextClass = dashboard.nextClass ?? null;
   const recentSchedules = dashboard.recentSchedules ?? [];
   const completedCount = dashboard.completedCount ?? 0;
   const weekCount = dashboard.weekCount ?? 0;
   const totalHours = dashboard.totalHours ?? 0;
-
-  const completedPercent = Math.min(
-    100,
-    Math.round((completedCount / LICENSE_GOAL_CLASSES) * 100),
-  );
 
   const recentColumns: TableColumn<Schedule>[] = [
     {
@@ -80,8 +76,6 @@ export default function StudentDashboard() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Mi dashboard"
-        subtitle="Resumen de tu progreso y próximas clases"
         actions={
           <Link to={ROUTES.STUDENT.BOOK}>
             <Button iconLeft={<Calendar className="h-4 w-4" />}>Agendar clase</Button>
@@ -94,6 +88,36 @@ export default function StudentDashboard() {
           <p className="text-body-sm text-error-600 dark:text-error-500">
             No pudimos cargar tu resumen. Intenta recargar la página.
           </p>
+        </Card>
+      ) : null}
+
+      {primaryEnrollment && !enrollmentsLoading ? (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-heading-md text-surface-900 dark:text-surface-50">
+              Progreso hacia tu licencia
+            </h2>
+            <Link to={ROUTES.STUDENT.LICENSES}>
+              <Button variant="ghost" size="sm" iconLeft={<GraduationCap className="h-4 w-4" />}>
+                Mis licencias
+              </Button>
+            </Link>
+          </div>
+          <LicenseProgressCard progress={primaryEnrollment} compact />
+        </section>
+      ) : !enrollmentsLoading && !primaryEnrollment ? (
+        <Card variant="elevated" padding="md" className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-heading-sm text-surface-800 dark:text-surface-100">
+              Empieza tu licencia de conducción
+            </p>
+            <p className="mt-1 text-body-sm text-surface-500">
+              Matricúlate en A1, B1, C1 u otra categoría para seguir teoría y práctica.
+            </p>
+          </div>
+          <Link to={ROUTES.STUDENT.LICENSES}>
+            <Button iconLeft={<GraduationCap className="h-4 w-4" />}>Ver licencias</Button>
+          </Link>
         </Card>
       ) : null}
 
@@ -131,17 +155,10 @@ export default function StudentDashboard() {
 
             <Card variant="elevated" padding="md">
               <p className="text-label text-surface-500 dark:text-surface-400">Clases completadas</p>
-              <div className="mt-3 flex items-center gap-4">
-                <CircularProgress value={completedPercent} size={72} strokeWidth={7} />
-                <div>
-                  <p className="text-display-sm text-surface-900 dark:text-surface-50">
-                    {completedCount}
-                  </p>
-                  <p className="text-caption text-surface-500 dark:text-surface-400">
-                    de {LICENSE_GOAL_CLASSES} meta
-                  </p>
-                </div>
-              </div>
+              <p className="mt-2 text-display-sm text-surface-900 dark:text-surface-50">
+                {completedCount}
+              </p>
+              <p className="text-caption text-surface-500 dark:text-surface-400">en total</p>
             </Card>
 
             <Card variant="elevated" padding="md">

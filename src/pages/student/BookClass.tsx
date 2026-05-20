@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Car, Sparkles, CalendarSearch } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Stepper } from '@/components/ui/Stepper';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -10,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { AvailabilitySlotCard } from '@/components/shared/ScheduleCard';
 import { ScheduleTypeBadge } from '@/components/shared/StatusBadge';
 import { useAutoAssignSchedule, useAvailabilitySlots } from '@/hooks/useStudentSchedules';
+import { useMyEnrollments } from '@/hooks/useStudentEnrollments';
 import { useToast } from '@/providers/ToastProvider';
 import { extractApiErrorMessage } from '@/lib/axios';
 import { SCHEDULE_TYPE_LABELS } from '@/constants/schedules';
@@ -50,6 +50,8 @@ export default function BookClass() {
   );
 
   const autoAssign = useAutoAssignSchedule();
+  const { data: enrollments = [] } = useMyEnrollments();
+  const activeEnrollment = enrollments.find((e) => e.status === 'ACTIVE');
 
   const openConfirmWithSchedule = (schedule: Schedule, source: 'auto' | 'manual') => {
     if (!classType) return;
@@ -59,10 +61,19 @@ export default function BookClass() {
 
   const handleAutoAssign = async () => {
     if (!classType || !selectedDate) return;
+    if (classType === 'PRACTICE' && !activeEnrollment) {
+      toast.error(
+        'Sin matrícula',
+        'Matricúlate primero en una licencia en Mis licencias para que las prácticas cuenten.',
+      );
+      return;
+    }
     try {
       const schedule = await autoAssign.mutateAsync({
         preferredDate: toApiDate(selectedDate),
         type: classType,
+        licenseCategoryId:
+          classType === 'PRACTICE' ? activeEnrollment?.licenseCategory.id : undefined,
       });
       openConfirmWithSchedule(schedule, 'auto');
     } catch (error) {
@@ -127,11 +138,6 @@ export default function BookClass() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Agendar clase"
-        subtitle="Selecciona el tipo de clase y el horario que prefieras"
-      />
-
       <Stepper steps={STEPS} currentStep={step} />
 
       {/* Paso 1 — Tipo */}

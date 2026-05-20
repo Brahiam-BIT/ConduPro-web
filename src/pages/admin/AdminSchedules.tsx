@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Select } from '@/components/ui/Select';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { Table, type TableColumn } from '@/components/ui/Table';
@@ -135,8 +134,6 @@ export default function AdminSchedules() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Agendamientos" subtitle="Listado y gestión de todas las clases" />
-
       <div className="grid gap-4 rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-900 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <Select
           label="Estado"

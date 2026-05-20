@@ -15,7 +15,11 @@ export interface ApiSchedule {
     firstName: string;
     lastName: string;
     email?: string;
+    phone?: string | null;
   };
+  classroom?: { id: string; name: string } | null;
+  theoryTopic?: { id: string; title: string } | null;
+  licenseCategory?: { id: string; code: string; name: string } | null;
   instructor?: {
     id: string;
     firstName: string;
@@ -63,6 +67,8 @@ export function mapApiSchedule(dto: ApiSchedule): Schedule {
           id: dto.student.id,
           firstName: dto.student.firstName,
           lastName: dto.student.lastName,
+          email: dto.student.email,
+          phone: dto.student.phone ?? null,
           avatarUrl: null,
         }
       : { id: '', firstName: '', lastName: '', avatarUrl: null },
@@ -82,6 +88,9 @@ export function mapApiSchedule(dto: ApiSchedule): Schedule {
           model: dto.vehicle.model,
         }
       : null,
+    classroom: dto.classroom ?? null,
+    theoryTopic: dto.theoryTopic ?? null,
+    licenseCategory: dto.licenseCategory ?? null,
     notes: dto.notes ?? undefined,
     createdAt:
       typeof dto.createdAt === 'string' ? dto.createdAt : new Date(dto.createdAt).toISOString(),

@@ -206,8 +206,6 @@ export default function AdminUsers() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Usuarios"
-        subtitle="Gestiona estudiantes, instructores y administradores"
         actions={
           <Button
             iconLeft={<Plus className="h-4 w-4" />}

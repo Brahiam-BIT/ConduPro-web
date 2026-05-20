@@ -146,8 +146,6 @@ export default function AdminVehicles() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Vehículos"
-        subtitle="Inventario de la flota"
         actions={
           <Button
             iconLeft={<Plus className="h-4 w-4" />}

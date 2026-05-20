@@ -9,6 +9,7 @@ import {
   ChevronsRight,
   Gauge,
   BookOpen,
+  GraduationCap,
   LineChart,
   LogOut,
   Menu,
@@ -22,6 +23,9 @@ import { ROUTES } from '@/constants/routes';
 import { Avatar } from '@/components/ui/Avatar';
 import { Logo } from './Logo';
 import { ThemeToggle } from './ThemeToggle';
+import { AppTopBar } from './AppTopBar';
+import { PageActionsProvider } from '@/providers/PageActionsContext';
+import { GuidedTourProvider } from '@/providers/GuidedTourProvider';
 
 interface NavItem {
   label: string;
@@ -33,6 +37,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
   [ROLES.STUDENT]: [
     { label: 'Dashboard', to: ROUTES.STUDENT.DASHBOARD, icon: Gauge },
     { label: 'Mis clases', to: ROUTES.STUDENT.SCHEDULES, icon: CalendarClock },
+    { label: 'Mis licencias', to: ROUTES.STUDENT.LICENSES, icon: GraduationCap },
     { label: 'Agendar clase', to: ROUTES.STUDENT.BOOK, icon: CalendarPlus },
   ],
   [ROLES.INSTRUCTOR]: [
@@ -99,9 +104,14 @@ export function AppShell() {
       >
         <MobileNavbar onOpenMenu={() => setMobileOpen(true)} userName={userFullName} />
         <main id="main-content" tabIndex={-1} className="flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8 outline-none">
-          <div className="mx-auto w-full max-w-7xl">
-            <Outlet />
-          </div>
+          <PageActionsProvider>
+            <GuidedTourProvider>
+              <div className="mx-auto w-full max-w-7xl">
+                <AppTopBar />
+                <Outlet />
+              </div>
+            </GuidedTourProvider>
+          </PageActionsProvider>
         </main>
       </div>
     </div>

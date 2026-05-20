@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { DatePicker } from '@/components/ui/DatePicker';
@@ -144,8 +143,6 @@ export default function InstructorSchedules() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Mis clases" subtitle="Gestiona las clases que impartes" />
-
       <div className="grid gap-4 rounded-xl border border-surface-200 bg-surface-50 p-4 dark:border-surface-800 dark:bg-surface-900 sm:grid-cols-2 lg:grid-cols-4">
         <Select
           label="Estado"

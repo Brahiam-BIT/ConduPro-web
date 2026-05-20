@@ -100,16 +100,22 @@ export function useAutoAssignSchedule() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   return useMutation({
-    mutationFn: (payload: { type: ScheduleType; preferredDate?: string }) => {
+    mutationFn: (payload: {
+      type: ScheduleType;
+      preferredDate?: string;
+      licenseCategoryId?: string;
+    }) => {
       if (!user) throw new Error('Debes iniciar sesión');
       return schedulesApi.autoAssign({
         studentId: user.id,
         type: payload.type,
         preferredDate: payload.preferredDate,
+        licenseCategoryId: payload.licenseCategoryId,
       });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: studentScheduleKeys.all });
+      void queryClient.invalidateQueries({ queryKey: ['enrollments'] });
     },
   });
 }

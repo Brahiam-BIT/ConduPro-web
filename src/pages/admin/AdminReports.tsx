@@ -85,8 +85,6 @@ export default function AdminReports() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Reportes"
-        subtitle="Métricas, gráficas y exportación"
         actions={
           <Button
             variant="secondary"

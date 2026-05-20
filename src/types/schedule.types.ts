@@ -1,8 +1,27 @@
-import type { User } from './user.types';
 import type { Vehicle } from './vehicle.types';
 
 export type ScheduleStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 export type ScheduleType = 'THEORY' | 'PRACTICE';
+
+export interface ScheduleParticipant {
+  id: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string | null;
+  email?: string;
+  phone?: string | null;
+}
+
+export interface ScheduleTheoryTopic {
+  id: string;
+  title: string;
+}
+
+export interface ScheduleLicenseCategory {
+  id: string;
+  code: string;
+  name: string;
+}
 
 export interface Schedule {
   id: string;
@@ -11,9 +30,12 @@ export interface Schedule {
   startAt: string;
   endAt: string;
   durationMinutes: number;
-  student: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
-  instructor: Pick<User, 'id' | 'firstName' | 'lastName' | 'avatarUrl'>;
+  student: ScheduleParticipant;
+  instructor: ScheduleParticipant;
   vehicle?: Pick<Vehicle, 'id' | 'plate' | 'brand' | 'model'> | null;
+  classroom?: { id: string; name: string } | null;
+  theoryTopic?: ScheduleTheoryTopic | null;
+  licenseCategory?: ScheduleLicenseCategory | null;
   notes?: string;
   createdAt: string;
 }

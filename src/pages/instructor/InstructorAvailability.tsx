@@ -73,8 +73,6 @@ export default function InstructorAvailability() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Mi disponibilidad"
-        subtitle="Marca los horarios en los que puedes impartir clases"
         actions={
           <Button
             iconLeft={<Save className="h-4 w-4" />}

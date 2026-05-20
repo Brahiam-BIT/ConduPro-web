@@ -1,6 +1,5 @@
 import { Car, CheckCircle2, ClipboardList, Users } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { KpiCard } from '@/components/admin/KpiCard';
 import { SchedulesLineChart } from '@/components/admin/SchedulesLineChart';
@@ -64,8 +63,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title="Panel de administración" subtitle="Vista general de la escuela" />
-
       {kpisError ? (
         <Card variant="elevated">
           <p className="text-body-sm text-error-600 dark:text-error-500">

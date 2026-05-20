@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Car, Plus, Settings2 } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { BookOpen, Car, CheckCircle2, Plus, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -9,6 +8,8 @@ import { Table, type TableColumn } from '@/components/ui/Table';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { LicenseCategoryFormModal } from '@/components/admin/LicenseCategoryFormModal';
 import { TheoryTopicFormModal } from '@/components/admin/TheoryTopicFormModal';
+import { UserAsyncSelect } from '@/components/admin/UserAsyncSelect';
+import { useAdminEnrollStudent, useAdminStudentEnrollments } from '@/hooks/useStudentEnrollments';
 import {
   useCreateTheoryTopic,
   useDeleteTheoryTopic,
@@ -22,6 +23,7 @@ import { useToast } from '@/providers/ToastProvider';
 import { extractApiErrorMessage } from '@/lib/axios';
 import { LICENSE_GROUP_LABELS, LICENSE_GROUP_ORDER } from '@/constants/licenseCategories';
 import { cn } from '@/utils/cn';
+import { formatLicenseRequirements } from '@/utils/licenseRequirements';
 import type { LicenseCategoryFormValues } from '@/schemas/licenseCategory.schema';
 import type { TheoryTopicFormValues } from '@/schemas/theoryTopic.schema';
 import type { LicenseCategory, TheoryTopic } from '@/types/curriculum.types';
@@ -36,6 +38,7 @@ export default function AdminCourses() {
   const [categoryToggleTarget, setCategoryToggleTarget] = useState<LicenseCategory | null>(null);
   const [topicToggleTarget, setTopicToggleTarget] = useState<TheoryTopic | null>(null);
   const [deleteTopicTarget, setDeleteTopicTarget] = useState<TheoryTopic | null>(null);
+  const [enrollStudentId, setEnrollStudentId] = useState('');
 
   const { data: categories = [], isLoading: categoriesLoading, isError: categoriesError } =
     useLicenseCategories();
@@ -48,12 +51,24 @@ export default function AdminCourses() {
   const updateTopicMutation = useUpdateTheoryTopic(selectedCategoryId ?? '');
   const deleteTopicMutation = useDeleteTheoryTopic(selectedCategoryId ?? '');
   const toggleTopicMutation = useToggleTheoryTopicActive(selectedCategoryId ?? '');
+  const adminEnrollMutation = useAdminEnrollStudent();
+  const { data: adminStudentEnrollments = [] } = useAdminStudentEnrollments(enrollStudentId);
+
+  const studentAlreadyInCategory =
+    !!selectedCategory &&
+    adminStudentEnrollments.some(
+      (e) => e.licenseCategory.id === selectedCategory.id && e.status === 'ACTIVE',
+    );
 
   useEffect(() => {
     if (!selectedCategoryId && categories.length > 0) {
       setSelectedCategoryId(categories[0]!.id);
     }
   }, [categories, selectedCategoryId]);
+
+  const selectedRequirements = selectedCategory
+    ? formatLicenseRequirements(selectedCategory)
+    : null;
 
   const groupedCategories = useMemo(() => {
     const map = new Map<string, LicenseCategory[]>();
@@ -231,20 +246,15 @@ export default function AdminCourses() {
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Cursos y licencias"
-        subtitle="Categorías de conducción y temario teórico por licencia"
-      />
-
       <Card variant="default" padding="md" className="border-primary-200/60 dark:border-primary-500/25">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
           <BookOpen className="h-6 w-6 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
           <div className="text-body-sm text-surface-600 dark:text-surface-400">
             <p className="font-medium text-surface-800 dark:text-surface-100">Clases teóricas</p>
             <p className="mt-1">
-              Define las materias que debe cumplir cada categoría (A1, B1, C1, etc.) y el cupo por
-              sesión. Los instructores podrán ofrecer esas materias según su disponibilidad (próxima
-              fase).
+              Define el temario teórico y cuántas clases prácticas exige cada licencia (por ejemplo,
+              A1: todos los temas activos + 10 prácticas). El seguimiento por estudiante llegará en
+              la siguiente fase.
             </p>
             <p className="mt-2 flex items-center gap-2 font-medium text-surface-700 dark:text-surface-200">
               <Car className="h-4 w-4" aria-hidden />
@@ -306,8 +316,8 @@ export default function AdminCourses() {
                                   {cat.name}
                                 </p>
                                 <p className="mt-1 text-caption text-surface-500">
-                                  {cat.topicCount} tema{cat.topicCount === 1 ? '' : 's'} · cupo{' '}
-                                  {cat.defaultTheoryCapacity}
+                                  {cat.topicCount} tema{cat.topicCount === 1 ? '' : 's'} ·{' '}
+                                  {cat.requiredPracticeSessions} prácticas
                                 </p>
                               </div>
                               <Badge variant={cat.isActive ? 'success' : 'neutral'} size="sm">
@@ -372,6 +382,112 @@ export default function AdminCourses() {
                   </Button>
                 </div>
               </div>
+
+              {selectedRequirements ? (
+                <Card variant="default" padding="md" className="border-primary-200/50 dark:border-primary-500/20">
+                  <h3 className="text-heading-sm text-surface-900 dark:text-surface-50">
+                    Requisitos para licencia {selectedCategory.code}
+                  </h3>
+                  <p className="mt-1 text-body-sm text-surface-600 dark:text-surface-400">
+                    Para obtener esta licencia el estudiante deberá cumplir:
+                  </p>
+                  <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <li className="flex gap-3 rounded-lg bg-surface-100/80 p-3 dark:bg-surface-800/50">
+                      <BookOpen
+                        className={cn(
+                          'h-5 w-5 shrink-0',
+                          selectedRequirements.isTheoryReady
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-warning-500',
+                        )}
+                        aria-hidden
+                      />
+                      <div>
+                        <p className="text-body-sm font-semibold text-surface-800 dark:text-surface-100">
+                          Teoría — {selectedRequirements.theoryLabel}
+                        </p>
+                        <p className="mt-0.5 text-caption text-surface-600 dark:text-surface-400">
+                          {selectedRequirements.theoryDetail}
+                        </p>
+                      </div>
+                    </li>
+                    <li className="flex gap-3 rounded-lg bg-surface-100/80 p-3 dark:bg-surface-800/50">
+                      <Car
+                        className={cn(
+                          'h-5 w-5 shrink-0',
+                          selectedRequirements.isPracticeConfigured
+                            ? 'text-primary-600 dark:text-primary-400'
+                            : 'text-warning-500',
+                        )}
+                        aria-hidden
+                      />
+                      <div>
+                        <p className="text-body-sm font-semibold text-surface-800 dark:text-surface-100">
+                          Práctica — {selectedRequirements.practiceLabel}
+                        </p>
+                        <p className="mt-0.5 text-caption text-surface-600 dark:text-surface-400">
+                          {selectedRequirements.practiceDetail}
+                        </p>
+                      </div>
+                    </li>
+                  </ul>
+                  {(!selectedRequirements.isTheoryReady ||
+                    !selectedRequirements.isPracticeConfigured) && (
+                    <p className="mt-3 flex items-start gap-2 text-caption text-warning-700 dark:text-warning-500">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+                      Configura el temario y las prácticas requeridas en &quot;Editar categoría&quot;.
+                    </p>
+                  )}
+                </Card>
+              ) : null}
+
+              <Card variant="default" padding="md">
+                <h3 className="text-heading-sm text-surface-800 dark:text-surface-100">
+                  Matricular estudiante en {selectedCategory.code}
+                </h3>
+                <p className="mt-1 text-body-sm text-surface-600 dark:text-surface-400">
+                  Asocia un estudiante a esta licencia para que pueda ver su progreso (teoría + práctica).
+                </p>
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:[&>div:first-child]:min-w-0 sm:[&>div:first-child]:flex-1">
+                  <div className="min-w-0 flex-1">
+                  <UserAsyncSelect
+                    label="Estudiante"
+                    role="STUDENT"
+                    value={enrollStudentId}
+                    onChange={(id) => setEnrollStudentId(id)}
+                    onClear={() => setEnrollStudentId('')}
+                    placeholder="Buscar estudiante…"
+                  />
+                  </div>
+                  <Button
+                    disabled={!enrollStudentId || studentAlreadyInCategory}
+                    isLoading={adminEnrollMutation.isPending}
+                    onClick={async () => {
+                      if (!selectedCategory) return;
+                      try {
+                        await adminEnrollMutation.mutateAsync({
+                          studentId: enrollStudentId,
+                          licenseCategoryId: selectedCategory.id,
+                        });
+                        toast.success(
+                          'Estudiante matriculado',
+                          `${selectedCategory.code} asignado correctamente.`,
+                        );
+                        setEnrollStudentId('');
+                      } catch (error) {
+                        toast.error('Error', extractApiErrorMessage(error));
+                      }
+                    }}
+                  >
+                    Matricular
+                  </Button>
+                </div>
+                {studentAlreadyInCategory ? (
+                  <p className="mt-2 text-body-sm text-warning-600 dark:text-warning-400">
+                    Este estudiante ya está matriculado en {selectedCategory?.code}.
+                  </p>
+                ) : null}
+              </Card>
 
               <Table
                 columns={topicColumns}

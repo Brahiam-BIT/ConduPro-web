@@ -111,8 +111,6 @@ export default function StudentSchedules() {
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
-        title="Mis clases"
-        subtitle="Consulta y gestiona todas tus clases agendadas"
         actions={
           <Link to={ROUTES.STUDENT.BOOK}>
             <Button iconLeft={<CalendarPlus className="h-4 w-4" />}>Agendar clase</Button>

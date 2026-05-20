@@ -1,14 +1,21 @@
+import { useMemo, useState } from 'react';
 import { Calendar, CalendarDays, CheckCircle2, Clock } from 'lucide-react';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ScheduleTypeBadge } from '@/components/shared/StatusBadge';
+import { ScheduleDetailModal } from '@/components/shared/ScheduleDetailModal';
+import { ParticipantInfoModal } from '@/components/shared/ParticipantInfoModal';
 import { WeeklyScheduleGrid } from '@/components/instructor/WeeklyScheduleGrid';
+import { WeekSchedulePickerModal } from '@/components/instructor/WeekSchedulePickerModal';
 import { QueryErrorBanner } from '@/components/shared/QueryErrorBanner';
 import { EMPTY_INSTRUCTOR_DASHBOARD } from '@/constants/dashboardDefaults';
-import { useInstructorDashboard } from '@/hooks/useInstructorSchedules';
+import {
+  useInstructorDashboard,
+  useInstructorScheduleDetail,
+} from '@/hooks/useInstructorSchedules';
 import { formatTime } from '@/utils/formatDate';
 import { formatStudentName } from '@/utils/instructor';
+import type { Schedule, ScheduleParticipant } from '@/types/schedule.types';
 
 function MetricSkeleton() {
   return (
@@ -24,13 +31,45 @@ export default function InstructorDashboard() {
   const dashboard = data ?? EMPTY_INSTRUCTOR_DASHBOARD;
   const todayClasses = dashboard.todayClasses ?? [];
 
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [pickerSchedules, setPickerSchedules] = useState<Schedule[] | null>(null);
+  const [cellPeerSchedules, setCellPeerSchedules] = useState<Schedule[]>([]);
+  const [participant, setParticipant] = useState<ScheduleParticipant | null>(null);
+
+  const { data: detailSchedule, isLoading: detailLoading } =
+    useInstructorScheduleDetail(selectedScheduleId);
+
+  const additionalStudents = useMemo(() => {
+    if (!detailSchedule || cellPeerSchedules.length <= 1) return [];
+    return cellPeerSchedules
+      .filter((s) => s.id !== detailSchedule.id)
+      .map((s) => s.student);
+  }, [detailSchedule, cellPeerSchedules]);
+
+  const handleWeekCellClick = (schedule: Schedule, cellSchedules: Schedule[]) => {
+    if (cellSchedules.length > 1) {
+      setPickerSchedules(cellSchedules);
+      return;
+    }
+    setCellPeerSchedules(cellSchedules);
+    setSelectedScheduleId(schedule.id);
+  };
+
+  const handlePickerSelect = (schedule: Schedule) => {
+    setPickerSchedules((peers) => {
+      setCellPeerSchedules(peers ?? [schedule]);
+      return null;
+    });
+    setSelectedScheduleId(schedule.id);
+  };
+
+  const closeDetail = () => {
+    setSelectedScheduleId(null);
+    setCellPeerSchedules([]);
+  };
+
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader
-        title="Dashboard"
-        subtitle="Resumen de tus clases impartidas esta semana"
-      />
-
       {isError ? (
         <QueryErrorBanner message="No pudimos cargar tu resumen. Intenta recargar la página." />
       ) : null}
@@ -57,7 +96,20 @@ export default function InstructorDashboard() {
               {todayClasses.map((s) => (
                 <li
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+                  role="button"
+                  tabIndex={0}
+                  className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-lg py-3 transition-colors first:pt-0 last:pb-0 hover:bg-surface-50 dark:hover:bg-surface-800/50"
+                  onClick={() => {
+                    setCellPeerSchedules([s]);
+                    setSelectedScheduleId(s.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setCellPeerSchedules([s]);
+                      setSelectedScheduleId(s.id);
+                    }
+                  }}
                 >
                   <div className="min-w-0">
                     <p className="text-body-sm font-semibold text-surface-800 dark:text-surface-100">
@@ -123,9 +175,35 @@ export default function InstructorDashboard() {
         {isLoading ? (
           <Skeleton className="h-64 w-full rounded-xl" />
         ) : (
-          <WeeklyScheduleGrid schedules={dashboard.weekSchedules ?? []} />
+          <WeeklyScheduleGrid
+            schedules={dashboard.weekSchedules ?? []}
+            onScheduleClick={handleWeekCellClick}
+          />
         )}
       </section>
+
+      <WeekSchedulePickerModal
+        open={!!pickerSchedules?.length}
+        onClose={() => setPickerSchedules(null)}
+        schedules={pickerSchedules ?? []}
+        onSelect={handlePickerSelect}
+      />
+
+      <ScheduleDetailModal
+        open={!!selectedScheduleId}
+        onClose={closeDetail}
+        schedule={detailSchedule ?? null}
+        isLoading={detailLoading}
+        viewer="instructor"
+        onParticipantClick={setParticipant}
+        additionalStudents={additionalStudents}
+      />
+
+      <ParticipantInfoModal
+        open={!!participant}
+        onClose={() => setParticipant(null)}
+        participant={participant}
+      />
     </div>
   );
 }

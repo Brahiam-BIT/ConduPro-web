@@ -17,13 +17,29 @@ export interface ScheduleListFilters {
   limit?: number;
 }
 
+const INSTRUCTOR_BULK_LIMIT = 200;
+
 export const instructorScheduleKeys = {
   all: ['schedules', 'instructor'] as const,
+  bulk: () => [...instructorScheduleKeys.all, 'bulk', INSTRUCTOR_BULK_LIMIT] as const,
   list: (filters: ScheduleListFilters) => [...instructorScheduleKeys.all, 'list', filters] as const,
   dashboard: () => [...instructorScheduleKeys.all, 'dashboard'] as const,
   detail: (id: string) => ['schedules', 'detail', id] as const,
   availability: (userId: string) => [...instructorScheduleKeys.all, 'availability', userId] as const,
 };
+
+/** Una sola petición limit=200 compartida por dashboard y grilla semanal. */
+export function useInstructorSchedulesBulk() {
+  return useQuery({
+    queryKey: instructorScheduleKeys.bulk(),
+    queryFn: async () => {
+      const res = await schedulesApi.list({ limit: INSTRUCTOR_BULK_LIMIT });
+      return Array.isArray(res?.data) ? res.data : [];
+    },
+    staleTime: 1000 * 30,
+    meta: { skipGlobalErrorHandler: true },
+  });
+}
 
 function buildListParams(filters: ScheduleListFilters): ScheduleFilters {
   return {
@@ -37,16 +53,12 @@ function buildListParams(filters: ScheduleListFilters): ScheduleFilters {
 }
 
 export function useInstructorDashboard() {
-  return useQuery({
-    queryKey: instructorScheduleKeys.dashboard(),
-    queryFn: async () => {
-      const res = await schedulesApi.list({ limit: 200 });
-      const rows = Array.isArray(res?.data) ? res.data : [];
-      return computeInstructorDashboardMetrics(rows);
-    },
+  const bulk = useInstructorSchedulesBulk();
+  return {
+    ...bulk,
+    data: computeInstructorDashboardMetrics(bulk.data ?? []),
     placeholderData: EMPTY_INSTRUCTOR_DASHBOARD,
-    meta: { skipGlobalErrorHandler: true },
-  });
+  };
 }
 
 export function useInstructorSchedulesList(filters: ScheduleListFilters) {
@@ -65,14 +77,11 @@ export function useInstructorScheduleDetail(id: string | null) {
 }
 
 export function useInstructorWeekSchedules() {
-  return useQuery({
-    queryKey: [...instructorScheduleKeys.all, 'week-grid'],
-    queryFn: async () => {
-      const res = await schedulesApi.list({ limit: 200 });
-      const rows = Array.isArray(res?.data) ? res.data : [];
-      return rows.filter((s) => s.status !== 'CANCELLED');
-    },
-  });
+  const bulk = useInstructorSchedulesBulk();
+  return {
+    ...bulk,
+    data: (bulk.data ?? []).filter((s) => s.status !== 'CANCELLED'),
+  };
 }
 
 export function useInstructorAvailability(userId: string | null) {

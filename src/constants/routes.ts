@@ -7,6 +7,7 @@ export const ROUTES = {
     DASHBOARD: '/student/dashboard',
     SCHEDULES: '/student/schedules',
     BOOK: '/student/book',
+    LICENSES: '/student/licenses',
   },
   INSTRUCTOR: {
     ROOT: '/instructor',

@@ -14,6 +14,7 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const StudentDashboard = lazy(() => import('@/pages/student/StudentDashboard'));
 const StudentSchedules = lazy(() => import('@/pages/student/StudentSchedules'));
 const BookClass = lazy(() => import('@/pages/student/BookClass'));
+const StudentLicenses = lazy(() => import('@/pages/student/StudentLicenses'));
 
 const InstructorDashboard = lazy(() => import('@/pages/instructor/InstructorDashboard'));
 const InstructorSchedules = lazy(() => import('@/pages/instructor/InstructorSchedules'));
@@ -106,6 +107,16 @@ const router = createBrowserRouter([
           <RoleRoute allow={[ROLES.STUDENT]}>
             <Lazy>
               <StudentSchedules />
+            </Lazy>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.LICENSES,
+        element: (
+          <RoleRoute allow={[ROLES.STUDENT]}>
+            <Lazy>
+              <StudentLicenses />
             </Lazy>
           </RoleRoute>
         ),

@@ -1,4 +1,13 @@
-import { Calendar, Car, Clock, FileText, User } from 'lucide-react';
+import {
+  BookOpen,
+  Building2,
+  Calendar,
+  Car,
+  Clock,
+  FileText,
+  GraduationCap,
+  User,
+} from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
@@ -11,7 +20,7 @@ import { Select } from '@/components/ui/Select';
 import { SCHEDULE_STATUS_FILTER_OPTIONS } from '@/constants/schedules';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from './StatusBadge';
 import type { ReactNode } from 'react';
-import type { Schedule, ScheduleStatus } from '@/types/schedule.types';
+import type { Schedule, ScheduleParticipant, ScheduleStatus } from '@/types/schedule.types';
 
 interface ScheduleDetailModalProps {
   open: boolean;
@@ -28,6 +37,10 @@ interface ScheduleDetailModalProps {
   statusValue?: ScheduleStatus;
   onStatusChange?: (status: ScheduleStatus) => void;
   isUpdatingStatus?: boolean;
+  /** Al hacer clic en el estudiante (vista instructor). */
+  onParticipantClick?: (participant: ScheduleParticipant) => void;
+  /** Varias clases teóricas en el mismo bloque (calendario semanal). */
+  additionalStudents?: ScheduleParticipant[];
 }
 
 function DetailRow({
@@ -65,11 +78,36 @@ export function ScheduleDetailModal({
   statusValue,
   onStatusChange,
   isUpdatingStatus = false,
+  onParticipantClick,
+  additionalStudents = [],
 }: ScheduleDetailModalProps) {
   const showCancel = schedule && onCancel && canCancelSchedule(schedule);
   const showComplete =
     viewer === 'instructor' && schedule && onComplete && canCompleteSchedule(schedule);
   const showStatusSelect = viewer === 'admin' && schedule && onStatusChange && statusValue;
+
+  const renderStudentButton = (student: ScheduleParticipant, key?: string) => {
+    const name = formatStudentName(student);
+    const content = (
+      <span className="inline-flex items-center gap-2">
+        <Avatar name={name} src={student.avatarUrl} size="sm" />
+        {name}
+      </span>
+    );
+    if (viewer === 'instructor' && onParticipantClick) {
+      return (
+        <button
+          key={key ?? student.id}
+          type="button"
+          className="text-left text-primary-600 underline-offset-2 hover:underline dark:text-primary-400"
+          onClick={() => onParticipantClick(student)}
+        >
+          {content}
+        </button>
+      );
+    }
+    return <span key={key ?? student.id}>{content}</span>;
+  };
 
   return (
     <Modal
@@ -118,6 +156,20 @@ export function ScheduleDetailModal({
             label="Horario"
             value={`${formatTime(schedule.startAt)} – ${formatTime(schedule.endAt)} (${formatDuration(schedule.durationMinutes)})`}
           />
+          {schedule.type === 'THEORY' && schedule.theoryTopic ? (
+            <DetailRow
+              icon={<BookOpen className="h-4 w-4" />}
+              label="Materia"
+              value={schedule.theoryTopic.title}
+            />
+          ) : null}
+          {schedule.licenseCategory ? (
+            <DetailRow
+              icon={<GraduationCap className="h-4 w-4" />}
+              label="Licencia"
+              value={`${schedule.licenseCategory.code} — ${schedule.licenseCategory.name}`}
+            />
+          ) : null}
           {viewer === 'admin' ? (
             <>
               <DetailRow
@@ -149,35 +201,42 @@ export function ScheduleDetailModal({
                 }
               />
             </>
+          ) : viewer === 'instructor' ? (
+            <DetailRow
+              icon={<User className="h-4 w-4" />}
+              label={
+                additionalStudents.length > 0 ? 'Estudiantes' : 'Estudiante'
+              }
+              value={
+                <ul className="space-y-2">
+                  {renderStudentButton(schedule.student)}
+                  {additionalStudents.map((s) => renderStudentButton(s, s.id))}
+                </ul>
+              }
+            />
           ) : (
             <DetailRow
               icon={<User className="h-4 w-4" />}
-              label={viewer === 'instructor' ? 'Estudiante' : 'Instructor'}
+              label="Instructor"
               value={
                 <span className="inline-flex items-center gap-2">
-                  {viewer === 'instructor' ? (
-                    <>
-                      <Avatar
-                        name={formatStudentName(schedule.student)}
-                        src={schedule.student.avatarUrl}
-                        size="sm"
-                      />
-                      {formatStudentName(schedule.student)}
-                    </>
-                  ) : (
-                    <>
-                      <Avatar
-                        name={formatInstructorName(schedule.instructor)}
-                        src={schedule.instructor.avatarUrl}
-                        size="sm"
-                      />
-                      {formatInstructorName(schedule.instructor)}
-                    </>
-                  )}
+                  <Avatar
+                    name={formatInstructorName(schedule.instructor)}
+                    src={schedule.instructor.avatarUrl}
+                    size="sm"
+                  />
+                  {formatInstructorName(schedule.instructor)}
                 </span>
               }
             />
           )}
+          {schedule.classroom ? (
+            <DetailRow
+              icon={<Building2 className="h-4 w-4" />}
+              label="Aula"
+              value={schedule.classroom.name}
+            />
+          ) : null}
           {showStatusSelect ? (
             <Select
               label="Cambiar estado"

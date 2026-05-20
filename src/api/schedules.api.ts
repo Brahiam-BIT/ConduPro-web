@@ -70,11 +70,13 @@ export const schedulesApi = {
     studentId: string;
     type: ScheduleType;
     preferredDate?: string;
+    licenseCategoryId?: string;
   }): Promise<Schedule> {
     const { data } = await api.post<ApiSchedule>('/schedules/auto-assign', {
       studentId: payload.studentId,
       type: payload.type,
       ...(payload.preferredDate ? { preferredDate: payload.preferredDate } : {}),
+      ...(payload.licenseCategoryId ? { licenseCategoryId: payload.licenseCategoryId } : {}),
     });
     return mapApiSchedule(data);
   },

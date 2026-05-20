@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { Toggle } from '@/components/ui/Toggle';
 import {
   licenseCategoryFormSchema,
   type LicenseCategoryFormValues,
@@ -29,6 +30,8 @@ export function LicenseCategoryFormModal({
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, touchedFields },
   } = useForm<LicenseCategoryFormValues>({
     resolver: zodResolver(licenseCategoryFormSchema),
@@ -41,9 +44,13 @@ export function LicenseCategoryFormModal({
         name: category.name,
         description: category.description,
         defaultTheoryCapacity: category.defaultTheoryCapacity,
+        requiredPracticeSessions: category.requiredPracticeSessions,
+        requiresAllTheoryTopics: category.requiresAllTheoryTopics,
       });
     }
   }, [open, category, reset]);
+
+  const requiresAllTheoryTopics = watch('requiresAllTheoryTopics');
 
   const showError = (field: keyof LicenseCategoryFormValues) =>
     touchedFields[field] ? errors[field]?.message : undefined;
@@ -86,6 +93,25 @@ export function LicenseCategoryFormModal({
           errorMessage={showError('defaultTheoryCapacity')}
           {...register('defaultTheoryCapacity')}
         />
+
+        <fieldset className="flex flex-col gap-3 rounded-lg border border-surface-200 p-4 dark:border-surface-700">
+          <legend className="px-1 text-label font-semibold text-surface-800 dark:text-surface-100">
+            Requisitos para obtener la licencia
+          </legend>
+          <Toggle
+            label="Exigir todos los temas teóricos activos"
+            description="El estudiante debe completar cada materia del temario de esta categoría."
+            checked={requiresAllTheoryTopics}
+            onChange={(e) => setValue('requiresAllTheoryTopics', e.target.checked)}
+          />
+          <Input
+            label="Clases prácticas requeridas"
+            type="number"
+            helperText="Cantidad de clases prácticas individuales (1 estudiante por clase)."
+            errorMessage={showError('requiredPracticeSessions')}
+            {...register('requiredPracticeSessions')}
+          />
+        </fieldset>
       </form>
     </Modal>
   );
