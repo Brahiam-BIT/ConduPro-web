@@ -1,4 +1,5 @@
 import { Car, CheckCircle2, ClipboardList, Users } from 'lucide-react';
+import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { Button } from '@/components/ui/Button';
@@ -23,9 +24,17 @@ import type { Schedule } from '@/types/schedule.types';
 const chartRange = getLast30DaysRange();
 
 export default function AdminDashboard() {
-  const { data: kpis, isLoading: kpisLoading } = useAdminDashboardKpis();
-  const { data: chartData, isLoading: chartLoading } = useAdminSchedulesChart(chartRange);
-  const { data: recent = [], isLoading: recentLoading } = useAdminRecentSchedules();
+  const { data: kpis, isLoading: kpisLoading, isError: kpisError } = useAdminDashboardKpis();
+  const {
+    data: chartData,
+    isLoading: chartLoading,
+    isError: chartError,
+  } = useAdminSchedulesChart(chartRange);
+  const {
+    data: recent = [],
+    isLoading: recentLoading,
+    isError: recentError,
+  } = useAdminRecentSchedules();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const { data: detail, isLoading: detailLoading } = useAdminScheduleDetail(selectedId);
 
@@ -52,21 +61,19 @@ export default function AdminDashboard() {
       cell: (r) => <ScheduleStatusBadge status={r.status} />,
       align: 'right',
     },
-    {
-      key: 'actions',
-      header: '',
-      cell: (r) => (
-        <Button variant="ghost" size="sm" onClick={() => setSelectedId(r.id)}>
-          Ver
-        </Button>
-      ),
-      align: 'right',
-    },
   ];
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader title="Panel de administración" subtitle="Vista general de la escuela" />
+
+      {kpisError ? (
+        <Card variant="elevated">
+          <p className="text-body-sm text-error-600 dark:text-error-500">
+            No pudimos cargar los indicadores. El resto del panel puede mostrar datos incompletos.
+          </p>
+        </Card>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
@@ -95,12 +102,27 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <SchedulesLineChart data={chartData ?? []} isLoading={chartLoading} />
+      {chartError ? (
+        <Card variant="elevated">
+          <p className="text-body-sm text-error-600 dark:text-error-500">
+            No pudimos cargar el gráfico de agendamientos.
+          </p>
+        </Card>
+      ) : (
+        <SchedulesLineChart data={chartData ?? []} isLoading={chartLoading} />
+      )}
 
       <section className="flex flex-col gap-4">
         <h2 className="text-heading-md text-surface-900 dark:text-surface-50">
           Últimos agendamientos
         </h2>
+        {recentError ? (
+          <Card variant="elevated">
+            <p className="text-body-sm text-error-600 dark:text-error-500">
+              No pudimos cargar los últimos agendamientos.
+            </p>
+          </Card>
+        ) : null}
         <Table
           columns={recentColumns}
           data={recent}

@@ -53,6 +53,7 @@ export function useAdminDashboardKpis() {
   return useQuery({
     queryKey: adminKeys.dashboard(),
     queryFn: () => reportsApi.kpis(),
+    meta: { skipGlobalErrorHandler: true },
   });
 }
 
@@ -61,6 +62,8 @@ export function useAdminSchedulesChart(range: ReportDateRange) {
     queryKey: adminKeys.chart(range),
     queryFn: () =>
       reportsApi.schedulesByDay({ startDate: range.startDate, endDate: range.endDate }),
+    placeholderData: [],
+    meta: { skipGlobalErrorHandler: true },
   });
 }
 
@@ -69,8 +72,10 @@ export function useAdminRecentSchedules() {
     queryKey: adminKeys.recentSchedules(),
     queryFn: async () => {
       const result = await schedulesApi.list({ limit: 10, page: 1 });
-      return result.data;
+      return Array.isArray(result?.data) ? result.data : [];
     },
+    placeholderData: [],
+    meta: { skipGlobalErrorHandler: true },
   });
 }
 

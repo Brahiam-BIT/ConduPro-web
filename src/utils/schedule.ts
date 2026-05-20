@@ -39,12 +39,15 @@ export interface StudentDashboardMetrics {
   recentSchedules: Schedule[];
 }
 
-export function computeStudentDashboardMetrics(schedules: Schedule[]): StudentDashboardMetrics {
+export function computeStudentDashboardMetrics(
+  schedules: Schedule[] | undefined | null,
+): StudentDashboardMetrics {
+  const list = schedules ?? [];
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
 
-  const active = schedules.filter((s) => s.status !== 'CANCELLED');
+  const active = list.filter((s) => s.status !== 'CANCELLED');
 
   const nextClass =
     active
@@ -55,18 +58,18 @@ export function computeStudentDashboardMetrics(schedules: Schedule[]): StudentDa
       )
       .sort((a, b) => parseISO(a.startAt).getTime() - parseISO(b.startAt).getTime())[0] ?? null;
 
-  const completedCount = schedules.filter((s) => s.status === 'COMPLETED').length;
+  const completedCount = list.filter((s) => s.status === 'COMPLETED').length;
 
   const weekCount = active.filter((s) => {
     const start = parseISO(s.startAt);
     return !isBefore(start, weekStart) && !isAfter(start, weekEnd);
   }).length;
 
-  const totalMinutes = schedules
+  const totalMinutes = list
     .filter((s) => s.status === 'COMPLETED')
     .reduce((sum, s) => sum + s.durationMinutes, 0);
 
-  const recentSchedules = [...schedules]
+  const recentSchedules = [...list]
     .sort((a, b) => parseISO(b.startAt).getTime() - parseISO(a.startAt).getTime())
     .slice(0, 5);
 

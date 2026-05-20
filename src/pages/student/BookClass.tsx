@@ -9,11 +9,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { Modal } from '@/components/ui/Modal';
 import { AvailabilitySlotCard } from '@/components/shared/ScheduleCard';
 import { ScheduleTypeBadge } from '@/components/shared/StatusBadge';
-import {
-  useAutoAssignSchedule,
-  useAvailabilitySlots,
-  useBookSchedule,
-} from '@/hooks/useStudentSchedules';
+import { useAutoAssignSchedule, useAvailabilitySlots } from '@/hooks/useStudentSchedules';
 import { useToast } from '@/providers/ToastProvider';
 import { extractApiErrorMessage } from '@/lib/axios';
 import { SCHEDULE_TYPE_LABELS } from '@/constants/schedules';
@@ -48,15 +44,12 @@ export default function BookClass() {
 
   const dateStr = selectedDate ? toApiDate(selectedDate) : null;
 
-  const {
-    data: slots = [],
-    isLoading: slotsLoading,
-    refetch: refetchSlots,
-    isFetching: slotsFetching,
-  } = useAvailabilitySlots(showSlots ? dateStr : null, showSlots ? classType : null);
+  const { data: slots = [], isLoading: slotsLoading } = useAvailabilitySlots(
+    showSlots ? dateStr : null,
+    showSlots ? classType : null,
+  );
 
   const autoAssign = useAutoAssignSchedule();
-  const bookMutation = useBookSchedule();
 
   const openConfirmWithSchedule = (schedule: Schedule, source: 'auto' | 'manual') => {
     if (!classType) return;
@@ -68,20 +61,13 @@ export default function BookClass() {
     if (!classType || !selectedDate) return;
     try {
       const schedule = await autoAssign.mutateAsync({
-        date: toApiDate(selectedDate),
+        preferredDate: toApiDate(selectedDate),
         type: classType,
       });
       openConfirmWithSchedule(schedule, 'auto');
     } catch (error) {
       toast.error('Sin disponibilidad', extractApiErrorMessage(error, 'No hay opciones para esa fecha.'));
     }
-  };
-
-  const handleLoadSlots = async () => {
-    if (!classType || !selectedDate) return;
-    setShowSlots(true);
-    setSelectedSlot(null);
-    await refetchSlots();
   };
 
   const handleSlotSelect = (slot: AvailabilitySlot) => {
@@ -113,12 +99,11 @@ export default function BookClass() {
     if (!pending) return;
     try {
       if (pending.source === 'manual' && selectedSlot && classType) {
-        await bookMutation.mutateAsync({
-          type: classType,
-          instructorId: selectedSlot.instructorId,
-          startAt: selectedSlot.startAt,
-          vehicleId: selectedSlot.vehicleId,
-        });
+        toast.error(
+          'No disponible',
+          'La reserva manual aún no está habilitada. Usa asignación automática.',
+        );
+        return;
       }
       // source === 'auto': la clase ya fue creada por POST /schedules/auto-assign
       toast.success('¡Clase agendada!', 'Tu clase fue confirmada correctamente.');
@@ -231,15 +216,10 @@ export default function BookClass() {
                 </h3>
               </div>
               <p className="text-body-sm text-surface-600 dark:text-surface-400">
-                Explora los slots con instructor y elige el que prefieras.
+                Próximamente: elegir instructor y horario manualmente. Por ahora usa asignación
+                automática.
               </p>
-              <Button
-                variant="outline"
-                fullWidth
-                disabled={!canProceedStep2}
-                isLoading={slotsFetching && showSlots}
-                onClick={() => void handleLoadSlots()}
-              >
+              <Button variant="outline" fullWidth disabled>
                 Ver slots disponibles
               </Button>
             </Card>
@@ -298,8 +278,8 @@ export default function BookClass() {
             </Button>
             <Button
               onClick={() => void handleConfirm()}
-              isLoading={bookMutation.isPending}
-              disabled={pending?.source === 'auto' && autoAssign.isPending}
+              isLoading={autoAssign.isPending}
+              disabled={autoAssign.isPending}
             >
               Confirmar
             </Button>

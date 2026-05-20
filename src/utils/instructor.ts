@@ -53,14 +53,17 @@ export interface InstructorDashboardMetrics {
   weekSchedules: Schedule[];
 }
 
-export function computeInstructorDashboardMetrics(schedules: Schedule[]): InstructorDashboardMetrics {
+export function computeInstructorDashboardMetrics(
+  schedules: Schedule[] | undefined | null,
+): InstructorDashboardMetrics {
+  const list = schedules ?? [];
   const now = new Date();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  const active = schedules.filter((s) => s.status !== 'CANCELLED');
+  const active = list.filter((s) => s.status !== 'CANCELLED');
 
   const todayClasses = active
     .filter((s) => isToday(parseISO(s.startAt)))

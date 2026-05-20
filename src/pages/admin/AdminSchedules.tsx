@@ -104,16 +104,6 @@ export default function AdminSchedules() {
       header: 'Estado',
       cell: (r) => <ScheduleStatusBadge status={r.status} />,
     },
-    {
-      key: 'actions',
-      header: 'Acciones',
-      align: 'right',
-      cell: (r) => (
-        <Button variant="ghost" size="sm" onClick={() => setSelectedId(r.id)}>
-          Ver
-        </Button>
-      ),
-    },
   ];
 
   const handleStatusChange = async (newStatus: ScheduleStatus) => {

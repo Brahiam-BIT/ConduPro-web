@@ -91,11 +91,7 @@ export function ScheduleDetailModal({
               </Button>
             ) : null}
           </div>
-        ) : (
-          <Button variant="ghost" onClick={onClose}>
-            Cerrar
-          </Button>
-        )
+        ) : undefined
       }
     >
       {isLoading ? (

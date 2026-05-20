@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { schedulesApi } from '@/api/schedules.api';
 import { usersApi } from '@/api/users.api';
+import { EMPTY_INSTRUCTOR_DASHBOARD } from '@/constants/dashboardDefaults';
 import { computeInstructorDashboardMetrics } from '@/utils/instructor';
 import type { ScheduleFilters, ScheduleStatus, ScheduleType } from '@/types/schedule.types';
 import type { Schedule } from '@/types/schedule.types';
@@ -39,9 +40,12 @@ export function useInstructorDashboard() {
   return useQuery({
     queryKey: instructorScheduleKeys.dashboard(),
     queryFn: async () => {
-      const { data } = await schedulesApi.list({ limit: 200 });
-      return computeInstructorDashboardMetrics(data);
+      const res = await schedulesApi.list({ limit: 200 });
+      const rows = Array.isArray(res?.data) ? res.data : [];
+      return computeInstructorDashboardMetrics(rows);
     },
+    placeholderData: EMPTY_INSTRUCTOR_DASHBOARD,
+    meta: { skipGlobalErrorHandler: true },
   });
 }
 
@@ -64,8 +68,9 @@ export function useInstructorWeekSchedules() {
   return useQuery({
     queryKey: [...instructorScheduleKeys.all, 'week-grid'],
     queryFn: async () => {
-      const { data } = await schedulesApi.list({ limit: 200 });
-      return data.filter((s) => s.status !== 'CANCELLED');
+      const res = await schedulesApi.list({ limit: 200 });
+      const rows = Array.isArray(res?.data) ? res.data : [];
+      return rows.filter((s) => s.status !== 'CANCELLED');
     },
   });
 }

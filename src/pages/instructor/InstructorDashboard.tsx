@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ScheduleTypeBadge } from '@/components/shared/StatusBadge';
 import { WeeklyScheduleGrid } from '@/components/instructor/WeeklyScheduleGrid';
+import { QueryErrorBanner } from '@/components/shared/QueryErrorBanner';
+import { EMPTY_INSTRUCTOR_DASHBOARD } from '@/constants/dashboardDefaults';
 import { useInstructorDashboard } from '@/hooks/useInstructorSchedules';
 import { formatTime } from '@/utils/formatDate';
 import { formatStudentName } from '@/utils/instructor';
@@ -19,6 +21,8 @@ function MetricSkeleton() {
 
 export default function InstructorDashboard() {
   const { data, isLoading, isError } = useInstructorDashboard();
+  const dashboard = data ?? EMPTY_INSTRUCTOR_DASHBOARD;
+  const todayClasses = dashboard.todayClasses ?? [];
 
   return (
     <div className="flex flex-col gap-8">
@@ -28,11 +32,7 @@ export default function InstructorDashboard() {
       />
 
       {isError ? (
-        <Card variant="elevated">
-          <p className="text-body-sm text-error-600 dark:text-error-500">
-            No pudimos cargar tu resumen. Intenta recargar la página.
-          </p>
-        </Card>
+        <QueryErrorBanner message="No pudimos cargar tu resumen. Intenta recargar la página." />
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -48,13 +48,13 @@ export default function InstructorDashboard() {
                 <Skeleton key={i} className="h-14 w-full rounded-lg" />
               ))}
             </div>
-          ) : data?.todayClasses.length === 0 ? (
+          ) : todayClasses.length === 0 ? (
             <p className="py-6 text-center text-body-sm text-surface-500 dark:text-surface-400">
               No tienes clases programadas para hoy.
             </p>
           ) : (
             <ul className="divide-y divide-surface-200 dark:divide-surface-800">
-              {data!.todayClasses.map((s) => (
+              {todayClasses.map((s) => (
                 <li
                   key={s.id}
                   className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
@@ -89,12 +89,12 @@ export default function InstructorDashboard() {
                   <span className="text-label">Esta semana</span>
                 </div>
                 <p className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {data?.weekTotal ?? 0}{' '}
+                  {dashboard.weekTotal ?? 0}{' '}
                   <span className="text-body-md font-normal text-surface-500">clases</span>
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-body-sm text-surface-600 dark:text-surface-400">
                   <Clock className="h-4 w-4" aria-hidden />
-                  {data?.weekHours ?? 0} horas impartidas
+                  {dashboard.weekHours ?? 0} horas impartidas
                 </p>
               </Card>
               <Card variant="elevated" padding="md">
@@ -103,11 +103,11 @@ export default function InstructorDashboard() {
                   <span className="text-label">Este mes</span>
                 </div>
                 <p className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {data?.monthTotal ?? 0}{' '}
+                  {dashboard.monthTotal ?? 0}{' '}
                   <span className="text-body-md font-normal text-surface-500">impartidas</span>
                 </p>
                 <p className="mt-1 text-body-sm text-success-600 dark:text-success-500">
-                  {data?.monthCompleted ?? 0} completadas
+                  {dashboard.monthCompleted ?? 0} completadas
                 </p>
               </Card>
             </>
@@ -123,7 +123,7 @@ export default function InstructorDashboard() {
         {isLoading ? (
           <Skeleton className="h-64 w-full rounded-xl" />
         ) : (
-          <WeeklyScheduleGrid schedules={data?.weekSchedules ?? []} />
+          <WeeklyScheduleGrid schedules={dashboard.weekSchedules ?? []} />
         )}
       </section>
     </div>

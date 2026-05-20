@@ -9,6 +9,7 @@ import { NextClassCard } from '@/components/shared/ScheduleCard';
 import { CircularProgress } from '@/components/shared/CircularProgress';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from '@/components/shared/StatusBadge';
 import { ScheduleEmptyState } from '@/components/shared/ScheduleEmptyState';
+import { EMPTY_STUDENT_DASHBOARD } from '@/constants/dashboardDefaults';
 import { useStudentDashboard } from '@/hooks/useStudentSchedules';
 import { formatDate, formatTime } from '@/utils/formatDate';
 import { formatInstructorName } from '@/utils/schedule';
@@ -28,10 +29,17 @@ function MetricCardSkeleton() {
 
 export default function StudentDashboard() {
   const { data, isLoading, isError } = useStudentDashboard();
+  const dashboard = data ?? EMPTY_STUDENT_DASHBOARD;
+  const nextClass = dashboard.nextClass ?? null;
+  const recentSchedules = dashboard.recentSchedules ?? [];
+  const completedCount = dashboard.completedCount ?? 0;
+  const weekCount = dashboard.weekCount ?? 0;
+  const totalHours = dashboard.totalHours ?? 0;
 
-  const completedPercent = data
-    ? Math.min(100, Math.round((data.completedCount / LICENSE_GOAL_CLASSES) * 100))
-    : 0;
+  const completedPercent = Math.min(
+    100,
+    Math.round((completedCount / LICENSE_GOAL_CLASSES) * 100),
+  );
 
   const recentColumns: TableColumn<Schedule>[] = [
     {
@@ -103,8 +111,8 @@ export default function StudentDashboard() {
         ) : (
           <>
             <div className="sm:col-span-2 lg:col-span-2">
-              {data?.nextClass ? (
-                <NextClassCard schedule={data.nextClass} />
+              {nextClass ? (
+                <NextClassCard schedule={nextClass} />
               ) : (
                 <Card variant="elevated" className="flex flex-col items-center gap-3 py-8 text-center">
                   <CalendarClock className="h-10 w-10 text-surface-400" aria-hidden />
@@ -127,7 +135,7 @@ export default function StudentDashboard() {
                 <CircularProgress value={completedPercent} size={72} strokeWidth={7} />
                 <div>
                   <p className="text-display-sm text-surface-900 dark:text-surface-50">
-                    {data?.completedCount ?? 0}
+                    {completedCount}
                   </p>
                   <p className="text-caption text-surface-500 dark:text-surface-400">
                     de {LICENSE_GOAL_CLASSES} meta
@@ -140,7 +148,7 @@ export default function StudentDashboard() {
               <p className="text-label text-surface-500 dark:text-surface-400">Clases esta semana</p>
               <p className="mt-2 flex items-baseline gap-2">
                 <span className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {data?.weekCount ?? 0}
+                  {weekCount}
                 </span>
                 <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" aria-hidden />
               </p>
@@ -150,7 +158,7 @@ export default function StudentDashboard() {
               <p className="text-label text-surface-500 dark:text-surface-400">Horas acumuladas</p>
               <p className="mt-2 flex items-baseline gap-2">
                 <span className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {data?.totalHours ?? 0}
+                  {totalHours}
                 </span>
                 <span className="text-body-sm text-surface-500">h</span>
                 <Clock className="ml-auto h-5 w-5 text-accent-500" aria-hidden />
@@ -173,7 +181,7 @@ export default function StudentDashboard() {
 
         <Table
           columns={recentColumns}
-          data={data?.recentSchedules ?? []}
+          data={recentSchedules}
           isLoading={isLoading}
           loadingRows={5}
           rowKey={(r) => r.id}

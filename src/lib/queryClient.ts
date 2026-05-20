@@ -14,7 +14,8 @@ export const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 5,
       retry: (failureCount, error) => {
         const status = (error as { response?: { status?: number } })?.response?.status;
-        if (status && [401, 403, 404].includes(status)) return false;
+        if (status && [400, 401, 403, 404, 429].includes(status)) return false;
+        if (status && status >= 500) return failureCount < 1;
         return failureCount < 2;
       },
       refetchOnWindowFocus: false,

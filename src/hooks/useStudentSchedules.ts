@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { schedulesApi } from '@/api/schedules.api';
+import { useAuth } from '@/hooks/useAuth';
+import { EMPTY_STUDENT_DASHBOARD } from '@/constants/dashboardDefaults';
 import { computeStudentDashboardMetrics } from '@/utils/schedule';
 import type { ScheduleFilters, ScheduleStatus, ScheduleType } from '@/types/schedule.types';
 import type { AvailabilitySlot, Schedule } from '@/types/schedule.types';
@@ -37,9 +39,12 @@ export function useStudentDashboard() {
   return useQuery({
     queryKey: studentScheduleKeys.dashboard(),
     queryFn: async () => {
-      const { data } = await schedulesApi.list({ limit: 100 });
-      return computeStudentDashboardMetrics(data);
+      const res = await schedulesApi.list({ limit: 100 });
+      const rows = Array.isArray(res?.data) ? res.data : [];
+      return computeStudentDashboardMetrics(rows);
     },
+    placeholderData: EMPTY_STUDENT_DASHBOARD,
+    meta: { skipGlobalErrorHandler: true },
   });
 }
 
@@ -58,12 +63,16 @@ export function useScheduleDetail(id: string | null) {
   });
 }
 
-export function useAvailabilitySlots(date: string | null, type: ScheduleType | null) {
+/** Requiere instructorId; deshabilitado hasta exponer listado de instructores en el API. */
+export function useAvailabilitySlots(
+  _date: string | null,
+  _type: ScheduleType | null,
+  instructorId?: string | null,
+) {
   return useQuery({
-    queryKey: studentScheduleKeys.availability(date ?? '', type ?? 'THEORY'),
-    queryFn: () =>
-      schedulesApi.availability({ date: date!, type: type! }),
-    enabled: !!date && !!type,
+    queryKey: studentScheduleKeys.availability('', 'THEORY'),
+    queryFn: () => schedulesApi.availability({ date: _date!, instructorId: instructorId! }),
+    enabled: false,
   });
 }
 
@@ -89,8 +98,16 @@ export function useBookSchedule() {
 
 export function useAutoAssignSchedule() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   return useMutation({
-    mutationFn: schedulesApi.autoAssign,
+    mutationFn: (payload: { type: ScheduleType; preferredDate?: string }) => {
+      if (!user) throw new Error('Debes iniciar sesión');
+      return schedulesApi.autoAssign({
+        studentId: user.id,
+        type: payload.type,
+        preferredDate: payload.preferredDate,
+      });
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: studentScheduleKeys.all });
     },
