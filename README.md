@@ -73,7 +73,7 @@ en una sola pantalla.
 ## Fases del desarrollo
 
 1. **Fase 1 — Scaffold + Design system** ✅
-2. **Fase 2 — Autenticación**
+2. **Fase 2 — Autenticación** ✅
 3. **Fase 3 — Vistas del estudiante**
 4. **Fase 4 — Vistas del instructor**
 5. **Fase 5 — Panel del administrador**

@@ -2,6 +2,7 @@ import { lazy, Suspense, type ReactNode } from 'react';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { Spinner } from '@/components/ui/Spinner';
 import { ProtectedRoute } from './ProtectedRoute';
+import { GuestRoute } from './GuestRoute';
 import { RoleRoute } from './RoleRoute';
 import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
@@ -48,17 +49,21 @@ const router = createBrowserRouter([
   {
     path: ROUTES.LOGIN,
     element: (
-      <Lazy>
-        <LoginPage />
-      </Lazy>
+      <GuestRoute>
+        <Lazy>
+          <LoginPage />
+        </Lazy>
+      </GuestRoute>
     ),
   },
   {
     path: ROUTES.REGISTER,
     element: (
-      <Lazy>
-        <RegisterPage />
-      </Lazy>
+      <GuestRoute>
+        <Lazy>
+          <RegisterPage />
+        </Lazy>
+      </GuestRoute>
     ),
   },
   {

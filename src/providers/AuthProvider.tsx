@@ -17,6 +17,7 @@ import {
 import { authApi } from '@/api/auth.api';
 import type { LoginPayload, RegisterPayload } from '@/types/auth.types';
 import type { User } from '@/types/user.types';
+import { ROUTES } from '@/constants/routes';
 
 interface AuthContextValue {
   user: User | null;
@@ -81,7 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     registerUnauthorizedHandler(() => {
+      clearAuthTokens();
       setUser(null);
+      const path = window.location.pathname;
+      if (!path.startsWith(ROUTES.LOGIN) && !path.startsWith(ROUTES.REGISTER)) {
+        window.location.assign(ROUTES.LOGIN);
+      }
     });
   }, []);
 
