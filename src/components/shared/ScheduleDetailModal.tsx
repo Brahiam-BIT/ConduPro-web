@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, formatTime } from '@/utils/formatDate';
 import { formatDuration } from '@/utils/formatters';
 import { canCancelSchedule, formatInstructorName } from '@/utils/schedule';
+import { canCompleteSchedule, formatStudentName } from '@/utils/instructor';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from './StatusBadge';
 import type { ReactNode } from 'react';
 import type { Schedule } from '@/types/schedule.types';
@@ -15,8 +16,12 @@ interface ScheduleDetailModalProps {
   onClose: () => void;
   schedule: Schedule | null;
   isLoading?: boolean;
+  /** Vista estudiante (instructor) o instructor (estudiante). */
+  viewer?: 'student' | 'instructor';
   onCancel?: () => void;
   isCancelling?: boolean;
+  onComplete?: () => void;
+  isCompleting?: boolean;
 }
 
 function DetailRow({
@@ -46,10 +51,15 @@ export function ScheduleDetailModal({
   onClose,
   schedule,
   isLoading = false,
+  viewer = 'student',
   onCancel,
   isCancelling = false,
+  onComplete,
+  isCompleting = false,
 }: ScheduleDetailModalProps) {
   const showCancel = schedule && onCancel && canCancelSchedule(schedule);
+  const showComplete =
+    viewer === 'instructor' && schedule && onComplete && canCompleteSchedule(schedule);
 
   return (
     <Modal
@@ -58,10 +68,19 @@ export function ScheduleDetailModal({
       title="Detalle de la clase"
       size="md"
       footer={
-        showCancel ? (
-          <Button variant="danger" onClick={onCancel} isLoading={isCancelling}>
-            Cancelar clase
-          </Button>
+        showComplete || showCancel ? (
+          <div className="flex w-full flex-wrap justify-end gap-2">
+            {showCancel ? (
+              <Button variant="danger" onClick={onCancel} isLoading={isCancelling}>
+                Cancelar clase
+              </Button>
+            ) : null}
+            {showComplete ? (
+              <Button onClick={onComplete} isLoading={isCompleting}>
+                Marcar como completada
+              </Button>
+            ) : null}
+          </div>
         ) : (
           <Button variant="ghost" onClick={onClose}>
             Cerrar
@@ -95,15 +114,28 @@ export function ScheduleDetailModal({
           />
           <DetailRow
             icon={<User className="h-4 w-4" />}
-            label="Instructor"
+            label={viewer === 'instructor' ? 'Estudiante' : 'Instructor'}
             value={
               <span className="inline-flex items-center gap-2">
-                <Avatar
-                  name={formatInstructorName(schedule.instructor)}
-                  src={schedule.instructor.avatarUrl}
-                  size="sm"
-                />
-                {formatInstructorName(schedule.instructor)}
+                {viewer === 'instructor' ? (
+                  <>
+                    <Avatar
+                      name={formatStudentName(schedule.student)}
+                      src={schedule.student.avatarUrl}
+                      size="sm"
+                    />
+                    {formatStudentName(schedule.student)}
+                  </>
+                ) : (
+                  <>
+                    <Avatar
+                      name={formatInstructorName(schedule.instructor)}
+                      src={schedule.instructor.avatarUrl}
+                      size="sm"
+                    />
+                    {formatInstructorName(schedule.instructor)}
+                  </>
+                )}
               </span>
             }
           />
