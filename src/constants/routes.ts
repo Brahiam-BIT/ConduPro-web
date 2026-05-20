@@ -20,6 +20,7 @@ export const ROUTES = {
     USERS: '/admin/users',
     SCHEDULES: '/admin/schedules',
     VEHICLES: '/admin/vehicles',
+    COURSES: '/admin/courses',
     REPORTS: '/admin/reports',
   },
   DEV: {

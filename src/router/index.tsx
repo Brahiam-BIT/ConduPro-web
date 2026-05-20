@@ -23,6 +23,7 @@ const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
 const AdminSchedules = lazy(() => import('@/pages/admin/AdminSchedules'));
 const AdminVehicles = lazy(() => import('@/pages/admin/AdminVehicles'));
+const AdminCourses = lazy(() => import('@/pages/admin/AdminCourses'));
 const AdminReports = lazy(() => import('@/pages/admin/AdminReports'));
 
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
@@ -201,6 +202,16 @@ const router = createBrowserRouter([
           <RoleRoute allow={[ROLES.ADMIN]}>
             <Lazy>
               <AdminVehicles />
+            </Lazy>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: ROUTES.ADMIN.COURSES,
+        element: (
+          <RoleRoute allow={[ROLES.ADMIN]}>
+            <Lazy>
+              <AdminCourses />
             </Lazy>
           </RoleRoute>
         ),

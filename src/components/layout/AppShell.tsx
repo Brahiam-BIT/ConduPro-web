@@ -8,6 +8,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Gauge,
+  BookOpen,
   LineChart,
   LogOut,
   Menu,
@@ -44,6 +45,7 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: 'Usuarios', to: ROUTES.ADMIN.USERS, icon: Users },
     { label: 'Agendamientos', to: ROUTES.ADMIN.SCHEDULES, icon: CalendarClock },
     { label: 'Vehículos', to: ROUTES.ADMIN.VEHICLES, icon: Car },
+    { label: 'Cursos', to: ROUTES.ADMIN.COURSES, icon: BookOpen },
     { label: 'Reportes', to: ROUTES.ADMIN.REPORTS, icon: LineChart },
   ],
 };
