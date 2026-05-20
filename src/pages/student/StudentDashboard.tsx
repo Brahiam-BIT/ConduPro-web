@@ -1,5 +1,191 @@
-import { PlaceholderPage } from '@/pages/PlaceholderPage';
+import { Link } from 'react-router-dom';
+import { BookOpen, Calendar, CalendarClock, Clock } from 'lucide-react';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { Table, type TableColumn } from '@/components/ui/Table';
+import { NextClassCard } from '@/components/shared/ScheduleCard';
+import { CircularProgress } from '@/components/shared/CircularProgress';
+import { ScheduleStatusBadge, ScheduleTypeBadge } from '@/components/shared/StatusBadge';
+import { ScheduleEmptyState } from '@/components/shared/ScheduleEmptyState';
+import { useStudentDashboard } from '@/hooks/useStudentSchedules';
+import { formatDate, formatTime } from '@/utils/formatDate';
+import { formatInstructorName } from '@/utils/schedule';
+import { ROUTES } from '@/constants/routes';
+import type { Schedule } from '@/types/schedule.types';
+
+const LICENSE_GOAL_CLASSES = 40;
+
+function MetricCardSkeleton() {
+  return (
+    <Card variant="elevated" padding="md">
+      <Skeleton className="mb-3 h-4 w-24" />
+      <Skeleton className="h-8 w-16" />
+    </Card>
+  );
+}
 
 export default function StudentDashboard() {
-  return <PlaceholderPage title="Mi dashboard" description="Resumen de tus clases y avances." />;
+  const { data, isLoading, isError } = useStudentDashboard();
+
+  const completedPercent = data
+    ? Math.min(100, Math.round((data.completedCount / LICENSE_GOAL_CLASSES) * 100))
+    : 0;
+
+  const recentColumns: TableColumn<Schedule>[] = [
+    {
+      key: 'type',
+      header: 'Tipo',
+      cell: (r) => <ScheduleTypeBadge type={r.type} />,
+    },
+    {
+      key: 'instructor',
+      header: 'Instructor',
+      cell: (r) => (
+        <span className="text-surface-800 dark:text-surface-100">
+          {formatInstructorName(r.instructor)}
+        </span>
+      ),
+    },
+    {
+      key: 'date',
+      header: 'Fecha',
+      sortable: true,
+      sortAccessor: (r) => r.startAt,
+      cell: (r) => formatDate(r.startAt, 'd MMM yyyy'),
+    },
+    {
+      key: 'time',
+      header: 'Hora',
+      cell: (r) => formatTime(r.startAt),
+      align: 'right',
+    },
+    {
+      key: 'status',
+      header: 'Estado',
+      cell: (r) => <ScheduleStatusBadge status={r.status} />,
+      align: 'right',
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-8">
+      <PageHeader
+        title="Mi dashboard"
+        subtitle="Resumen de tu progreso y próximas clases"
+        actions={
+          <Link to={ROUTES.STUDENT.BOOK}>
+            <Button iconLeft={<Calendar className="h-4 w-4" />}>Agendar clase</Button>
+          </Link>
+        }
+      />
+
+      {isError ? (
+        <Card variant="elevated">
+          <p className="text-body-sm text-error-600 dark:text-error-500">
+            No pudimos cargar tu resumen. Intenta recargar la página.
+          </p>
+        </Card>
+      ) : null}
+
+      {/* KPI grid */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {isLoading ? (
+          <>
+            <Card variant="elevated" className="sm:col-span-2 xl:col-span-2">
+              <Skeleton className="h-28 w-full rounded-lg" />
+            </Card>
+            <MetricCardSkeleton />
+            <MetricCardSkeleton />
+            <MetricCardSkeleton />
+          </>
+        ) : (
+          <>
+            <div className="sm:col-span-2 xl:col-span-2">
+              {data?.nextClass ? (
+                <NextClassCard schedule={data.nextClass} />
+              ) : (
+                <Card variant="elevated" className="flex flex-col items-center gap-3 py-8 text-center">
+                  <CalendarClock className="h-10 w-10 text-surface-400" aria-hidden />
+                  <p className="text-heading-sm text-surface-800 dark:text-surface-100">
+                    Sin clases próximas
+                  </p>
+                  <p className="text-body-sm text-surface-500 dark:text-surface-400">
+                    Agenda una nueva clase cuando quieras continuar.
+                  </p>
+                  <Link to={ROUTES.STUDENT.BOOK}>
+                    <Button size="sm">Agendar ahora</Button>
+                  </Link>
+                </Card>
+              )}
+            </div>
+
+            <Card variant="elevated" padding="md">
+              <p className="text-label text-surface-500 dark:text-surface-400">Clases completadas</p>
+              <div className="mt-3 flex items-center gap-4">
+                <CircularProgress value={completedPercent} size={72} strokeWidth={7} />
+                <div>
+                  <p className="text-display-sm text-surface-900 dark:text-surface-50">
+                    {data?.completedCount ?? 0}
+                  </p>
+                  <p className="text-caption text-surface-500 dark:text-surface-400">
+                    de {LICENSE_GOAL_CLASSES} meta
+                  </p>
+                </div>
+              </div>
+            </Card>
+
+            <Card variant="elevated" padding="md">
+              <p className="text-label text-surface-500 dark:text-surface-400">Clases esta semana</p>
+              <p className="mt-2 flex items-baseline gap-2">
+                <span className="text-display-sm text-surface-900 dark:text-surface-50">
+                  {data?.weekCount ?? 0}
+                </span>
+                <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" aria-hidden />
+              </p>
+            </Card>
+
+            <Card variant="elevated" padding="md">
+              <p className="text-label text-surface-500 dark:text-surface-400">Horas acumuladas</p>
+              <p className="mt-2 flex items-baseline gap-2">
+                <span className="text-display-sm text-surface-900 dark:text-surface-50">
+                  {data?.totalHours ?? 0}
+                </span>
+                <span className="text-body-sm text-surface-500">h</span>
+                <Clock className="ml-auto h-5 w-5 text-accent-500" aria-hidden />
+              </p>
+            </Card>
+          </>
+        )}
+      </div>
+
+      {/* Historial reciente */}
+      <section className="flex flex-col gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-heading-md text-surface-900 dark:text-surface-50">Historial reciente</h2>
+          <Link to={ROUTES.STUDENT.SCHEDULES}>
+            <Button variant="ghost" size="sm">
+              Ver todas
+            </Button>
+          </Link>
+        </div>
+
+        <Table
+          columns={recentColumns}
+          data={data?.recentSchedules ?? []}
+          isLoading={isLoading}
+          loadingRows={5}
+          rowKey={(r) => r.id}
+          caption="Últimas 5 clases"
+          emptyState={
+            <ScheduleEmptyState
+              title="Sin historial aún"
+              description="Cuando completes o agendes clases aparecerán aquí."
+            />
+          }
+        />
+      </section>
+    </div>
+  );
 }
