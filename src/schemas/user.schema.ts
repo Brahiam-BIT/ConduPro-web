@@ -11,7 +11,6 @@ export const userFormSchema = z
     phone: z.string().optional(),
     role: roleEnum,
     password: z.string().optional(),
-    isActive: z.boolean().default(true),
   })
   .superRefine((data, ctx) => {
     if (data.password !== undefined && data.password.length > 0 && data.password.length < 8) {

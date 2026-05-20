@@ -2,7 +2,6 @@ import { Car, CheckCircle2, ClipboardList, Users } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Table, type TableColumn } from '@/components/ui/Table';
-import { Button } from '@/components/ui/Button';
 import { KpiCard } from '@/components/admin/KpiCard';
 import { SchedulesLineChart } from '@/components/admin/SchedulesLineChart';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from '@/components/shared/StatusBadge';

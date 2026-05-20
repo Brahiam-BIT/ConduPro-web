@@ -7,6 +7,7 @@ import { Tabs } from '@/components/ui/Tabs';
 import { Table, type TableColumn } from '@/components/ui/Table';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { Toggle } from '@/components/ui/Toggle';
 import { Pagination } from '@/components/shared/Pagination';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { ListEmptyState } from '@/components/shared/ListEmptyState';
@@ -23,6 +24,7 @@ import { extractApiErrorMessage } from '@/lib/axios';
 import { ROLE_LABELS } from '@/constants/roles';
 import { USER_ROLE_FILTER_OPTIONS, roleFilterToParam, type UserRoleFilter } from '@/constants/users';
 import { formatDate } from '@/utils/formatDate';
+import { cn } from '@/utils/cn';
 import type { UserFormValues } from '@/schemas/user.schema';
 import type { User } from '@/types/user.types';
 import type { Role } from '@/constants/roles';
@@ -103,12 +105,15 @@ export default function AdminUsers() {
     {
       key: 'actions',
       header: 'Acciones',
-      align: 'right',
+      align: 'center',
+      className: 'w-40',
+      mobileLabel: 'Acciones',
       cell: (u) => (
-        <div className="flex justify-end gap-1">
+        <div className="flex items-center justify-center gap-3">
           <Button
             variant="ghost"
             size="sm"
+            className="shrink-0"
             onClick={(e) => {
               e.stopPropagation();
               setEditingUser(u);
@@ -117,16 +122,32 @@ export default function AdminUsers() {
           >
             Editar
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setToggleTarget(u);
-            }}
+          <div
+            className="inline-flex items-center gap-2"
+            onClick={(e) => e.stopPropagation()}
           >
-            {u.isActive ? 'Desactivar' : 'Activar'}
-          </Button>
+            <Toggle
+              size="sm"
+              checked={u.isActive}
+              aria-label={
+                u.isActive
+                  ? `Desactivar usuario ${u.firstName} ${u.lastName}`
+                  : `Activar usuario ${u.firstName} ${u.lastName}`
+              }
+              disabled={toggleMutation.isPending && toggleTarget?.id === u.id}
+              onChange={() => setToggleTarget(u)}
+            />
+            <span
+              className={cn(
+                'min-w-[3.25rem] text-caption font-semibold',
+                u.isActive
+                  ? 'text-success-600 dark:text-success-500'
+                  : 'text-surface-500 dark:text-surface-400',
+              )}
+            >
+              {u.isActive ? 'Activo' : 'Inactivo'}
+            </span>
+          </div>
         </div>
       ),
     },
@@ -143,7 +164,6 @@ export default function AdminUsers() {
             email: values.email,
             phone: values.phone,
             role: values.role as Role,
-            isActive: values.isActive,
             ...(values.password ? { password: values.password } : {}),
           },
         });

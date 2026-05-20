@@ -88,16 +88,25 @@ export default function InstructorSchedules() {
       header: 'Estado',
       cell: (r) => <ScheduleStatusBadge status={r.status} />,
     },
-    ...(true
-      ? [
-          {
-            key: 'actions',
-            header: 'Acciones',
-            align: 'right' as const,
-            cell: (r: (typeof columns)[0] extends never ? never : import('@/types/schedule.types').Schedule) => null,
-          },
-        ]
-      : []),
+    {
+      key: 'actions',
+      header: 'Acciones',
+      align: 'right',
+      cell: (r) =>
+        canCompleteSchedule(r) ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedId(r.id);
+              setConfirmAction('complete');
+            }}
+          >
+            Completar
+          </Button>
+        ) : null,
+    },
   ];
 
   const handleConfirm = async () => {

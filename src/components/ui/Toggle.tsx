@@ -34,7 +34,7 @@ export function Toggle({
     <label
       htmlFor={inputId}
       className={cn(
-        'group flex items-start gap-3',
+        'group inline-flex items-center gap-2',
         disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
         containerClassName,
       )}
