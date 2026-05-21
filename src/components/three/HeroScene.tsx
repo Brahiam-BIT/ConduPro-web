@@ -1,7 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { EffectComposer, Bloom, ChromaticAberration, Vignette } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import BrandCanvas from './BrandCanvas';
 import { RoadShader } from './RoadShader';
@@ -9,7 +8,7 @@ import ParticlesField from './ParticlesField';
 import { useAdaptiveQuality } from '@/hooks/useAdaptiveQuality';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
-/** Pequeño helper determinista para sembrar valores random reproducibles. */
+/** Helper determinista para sembrar valores random reproducibles. */
 function seeded(seed: number) {
   let s = seed;
   return () => {
@@ -19,22 +18,21 @@ function seeded(seed: number) {
 }
 
 interface CityProps {
-  /** Cantidad de edificios a cada lado. */
   count?: number;
-  /** Lado (-1 izquierda, 1 derecha). */
   side: 1 | -1;
-  /** Profundidad máxima en -Z. */
   depth?: number;
 }
 
 /**
- * Edificios low-poly a los costados de la carretera, hechos con primitivas
- * (Icosahedron/Cone/Box) para tener una silueta sci-fi sin GLTF.
+ * Edificios low-poly a los costados. Strips emisivos atenuados para no
+ * gatillar el Bloom — antes pegaban como flashes cyan/violeta.
  */
-function CityCluster({ count = 18, side, depth = 80 }: CityProps) {
-  const groupRef = useRef<THREE.Group>(null);
+function CityCluster({ count = 14, side, depth = 90 }: CityProps) {
   const buildings = useMemo(() => {
     const rng = seeded(side === 1 ? 1337 : 7331);
+    const PALETTE_BODY = ['#1A1535', '#0D0A1E', '#241A4D', '#171134'];
+    const PALETTE_GLOW = ['#0AFFE0', '#7000FF', '#A675FF', '#0AFFE0'];
+
     const arr: Array<{
       pos: [number, number, number];
       kind: 'box' | 'icos' | 'cone';
@@ -43,9 +41,6 @@ function CityCluster({ count = 18, side, depth = 80 }: CityProps) {
       color: string;
       glow: string;
     }> = [];
-    const PALETTE_BODY = ['#1A1535', '#0D0A1E', '#241A4D', '#171134'];
-    const PALETTE_GLOW = ['#0AFFE0', '#7000FF', '#A675FF', '#0AFFE0'];
-
     for (let i = 0; i < count; i++) {
       const z = -i * (depth / count) - rng() * 2;
       const xJitter = rng() * 3;
@@ -53,7 +48,7 @@ function CityCluster({ count = 18, side, depth = 80 }: CityProps) {
       const h = 2 + rng() * 6;
       const w = 1 + rng() * 1.4;
       const kindRoll = rng();
-      const kind: CityProps extends never ? never : 'box' | 'icos' | 'cone' =
+      const kind: 'box' | 'icos' | 'cone' =
         kindRoll < 0.55 ? 'box' : kindRoll < 0.85 ? 'icos' : 'cone';
       const color = PALETTE_BODY[Math.floor(rng() * PALETTE_BODY.length)] ?? PALETTE_BODY[0]!;
       const glow = PALETTE_GLOW[Math.floor(rng() * PALETTE_GLOW.length)] ?? PALETTE_GLOW[0]!;
@@ -63,37 +58,36 @@ function CityCluster({ count = 18, side, depth = 80 }: CityProps) {
   }, [count, side, depth]);
 
   return (
-    <group ref={groupRef}>
+    <group>
       {buildings.map((b, i) => (
         <group key={i} position={b.pos}>
           {b.kind === 'box' ? (
             <mesh>
               <boxGeometry args={[b.w, b.h, b.w * 0.9]} />
-              <meshStandardMaterial color={b.color} metalness={0.6} roughness={0.45} />
+              <meshStandardMaterial color={b.color} metalness={0.55} roughness={0.55} />
             </mesh>
           ) : null}
           {b.kind === 'icos' ? (
             <mesh>
               <icosahedronGeometry args={[b.w * 0.8, 0]} />
-              <meshStandardMaterial color={b.color} metalness={0.55} roughness={0.4} flatShading />
+              <meshStandardMaterial color={b.color} metalness={0.5} roughness={0.5} flatShading />
             </mesh>
           ) : null}
           {b.kind === 'cone' ? (
             <mesh>
               <coneGeometry args={[b.w * 0.7, b.h, 6]} />
-              <meshStandardMaterial color={b.color} metalness={0.5} roughness={0.5} flatShading />
+              <meshStandardMaterial color={b.color} metalness={0.45} roughness={0.6} flatShading />
             </mesh>
           ) : null}
 
-          {/* Strip emisivo en la fachada para sensación cyberpunk */}
+          {/* Strip emisivo lateral — opacity bajada para no saturar el Bloom */}
           <mesh position={[side * -b.w * 0.51, 0, 0]} rotation-y={-side * (Math.PI / 2)}>
-            <planeGeometry args={[b.w * 0.9, b.h * 0.08]} />
-            <meshBasicMaterial color={b.glow} transparent opacity={0.85} />
+            <planeGeometry args={[b.w * 0.9, b.h * 0.06]} />
+            <meshBasicMaterial color={b.glow} transparent opacity={0.4} />
           </mesh>
-          {/* Punto de antena */}
           <mesh position={[0, b.h * 0.55, 0]}>
-            <sphereGeometry args={[0.06, 8, 8]} />
-            <meshBasicMaterial color={b.glow} />
+            <sphereGeometry args={[0.05, 8, 8]} />
+            <meshBasicMaterial color={b.glow} transparent opacity={0.6} />
           </mesh>
         </group>
       ))}
@@ -108,11 +102,10 @@ interface MouseFollowLightProps {
   height?: number;
 }
 
-/** PointLight cyan que sigue al mouse en el plano XZ (lerp suave). */
 function MouseFollowLight({
   color = '#0AFFE0',
-  intensity = 20,
-  range = 6,
+  intensity = 12,
+  range = 5,
   height = 2.2,
 }: MouseFollowLightProps) {
   const ref = useRef<THREE.PointLight>(null);
@@ -127,7 +120,7 @@ function MouseFollowLight({
     l.position.lerp(target.current, lerp);
   });
 
-  return <pointLight ref={ref} color={color} intensity={intensity} distance={14} decay={2} />;
+  return <pointLight ref={ref} color={color} intensity={intensity} distance={12} decay={2} />;
 }
 
 interface CameraParallaxProps {
@@ -136,16 +129,19 @@ interface CameraParallaxProps {
   lookAt?: [number, number, number];
 }
 
-/** Parallax suave en la cámara siguiendo el mouse (±amplitudeDeg). */
-function CameraParallax({ basePosition, amplitudeDeg = 5, lookAt = [0, 1.2, -20] }: CameraParallaxProps) {
+function CameraParallax({
+  basePosition,
+  amplitudeDeg = 4,
+  lookAt = [0, 1.2, -20],
+}: CameraParallaxProps) {
   const { camera, mouse } = useThree();
   const lookVec = useMemo(() => new THREE.Vector3(...lookAt), [lookAt]);
   const target = useRef(new THREE.Vector3(...basePosition));
   const amp = (amplitudeDeg * Math.PI) / 180;
 
   useFrame((_state, delta) => {
-    const offsetX = Math.sin(-mouse.x * amp) * 1.6;
-    const offsetY = mouse.y * amp * 0.6;
+    const offsetX = Math.sin(-mouse.x * amp) * 1.2;
+    const offsetY = mouse.y * amp * 0.4;
     target.current.set(basePosition[0] + offsetX, basePosition[1] + offsetY, basePosition[2]);
     const lerp = 1 - Math.pow(0.001, delta);
     camera.position.lerp(target.current, lerp);
@@ -155,63 +151,119 @@ function CameraParallax({ basePosition, amplitudeDeg = 5, lookAt = [0, 1.2, -20]
   return null;
 }
 
+const SEGMENT_LENGTH = 80;
+const SEGMENT_RECYCLE_THRESHOLD = 30;
+const SEGMENT_LOOP_DISTANCE = SEGMENT_LENGTH * 3;
+
+/**
+ * RoadScroller — 3 segmentos físicos que se reciclan en world space.
+ * Sin scroll UV del shader (speed=0), velocidad acotada vía `speedRef`:
+ * 0.03 → 0.10 con lerp suave. Esto elimina el flicker que se veía con la
+ * versión UV-scroll a alta velocidad.
+ */
+function RoadScroller({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
+  const ref0 = useRef<THREE.Mesh>(null);
+  const ref1 = useRef<THREE.Mesh>(null);
+  const ref2 = useRef<THREE.Mesh>(null);
+  const refs = useMemo(() => [ref0, ref1, ref2], []);
+  const positions = useRef<[number, number, number]>([
+    0,
+    -SEGMENT_LENGTH,
+    -SEGMENT_LENGTH * 2,
+  ]);
+
+  useFrame(() => {
+    const speed = speedRef.current;
+    const next: [number, number, number] = [...positions.current] as [
+      number,
+      number,
+      number,
+    ];
+    for (let i = 0; i < 3; i++) {
+      let newZ = next[i] + speed;
+      if (newZ > SEGMENT_RECYCLE_THRESHOLD) newZ -= SEGMENT_LOOP_DISTANCE;
+      const m = refs[i].current;
+      if (m) m.position.z = newZ;
+      next[i] = newZ;
+    }
+    positions.current = next;
+  });
+
+  return (
+    <>
+      {refs.map((ref, i) => (
+        <mesh
+          key={i}
+          ref={ref}
+          rotation-x={-Math.PI / 2}
+          position={[0, 0, positions.current[i]]}
+        >
+          <planeGeometry args={[36, SEGMENT_LENGTH, 1, 1]} />
+          <RoadShader
+            speed={0}
+            lanes={6}
+            laneColor="#FFFFFF"
+            glowColor="#7000FF"
+            asphaltColor="#04020F"
+          />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
+function useSpeedRamp(target = 0.1) {
+  const speedRef = useRef(0.03);
+  useFrame(() => {
+    speedRef.current += (target - speedRef.current) * 0.005;
+  });
+  return speedRef;
+}
+
 function SceneBody() {
   const reduced = usePrefersReducedMotion();
   const quality = useAdaptiveQuality();
   const postprocessing = quality.postprocessing && !reduced;
-  const caOffset = useMemo(() => new THREE.Vector2(0.001, 0.001), []);
+  const target = reduced ? 0.015 : 0.1;
+  const speedRef = useSpeedRamp(target);
 
   return (
     <>
       <color attach="background" args={['#04020F']} />
-      <fog attach="fog" args={['#04020F', 14, 70]} />
+      {/* Fog denso: esconde el horizonte y mata el shimmer lejano */}
+      <fog attach="fog" args={['#04020F', 12, 55]} />
 
-      {/* Luces */}
-      <ambientLight intensity={0.45} />
-      <pointLight position={[0, 12, -30]} intensity={50} color="#7000FF" distance={60} decay={2} />
-      <pointLight position={[0, 2, 5]} intensity={10} color="#0AFFE0" distance={14} decay={2} />
-      <MouseFollowLight color="#0AFFE0" intensity={18} range={5} height={2.4} />
+      {/* Luces — bajadas para que el Bloom no las dispare como flash */}
+      <ambientLight intensity={0.35} />
+      <pointLight position={[0, 12, -25]} intensity={22} color="#7000FF" distance={50} decay={2} />
+      <pointLight position={[0, 2, 5]} intensity={6} color="#0AFFE0" distance={10} decay={2} />
+      <MouseFollowLight color="#0AFFE0" intensity={10} range={5} height={2.4} />
 
-      {/* Parallax sutil ±5° (spec) */}
-      <CameraParallax basePosition={[0, 2.4, 4]} amplitudeDeg={5} lookAt={[0, 1.4, -25]} />
+      <CameraParallax basePosition={[0, 2.4, 4]} amplitudeDeg={4} lookAt={[0, 1.4, -25]} />
 
-      {/* Carretera futurista vista diagonal con líneas en loop */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0, -40]}>
-        <planeGeometry args={[36, 200, 1, 1]} />
-        <RoadShader
-          speed={1.2}
-          lanes={6}
-          laneColor="#0AFFE0"
-          glowColor="#7000FF"
-          asphaltColor="#04020F"
-        />
-      </mesh>
+      {/* Carretera: 3 segmentos físicos */}
+      <RoadScroller speedRef={speedRef} />
 
-      {/* Edificios low-poly a ambos costados */}
-      <CityCluster side={-1} count={20} depth={90} />
-      <CityCluster side={1} count={20} depth={90} />
+      {/* Edificios: menos densos */}
+      <CityCluster side={-1} count={14} depth={80} />
+      <CityCluster side={1} count={14} depth={80} />
 
-      {/* Partículas cyan flotantes (spec: 2000) */}
+      {/* Partículas: menos y más sutiles */}
       <ParticlesField
-        count={2000}
+        count={900}
         particleScale={quality.particleScale}
         radius={22}
-        size={0.045}
+        size={0.035}
         dual
-        opacity={0.85}
+        opacity={0.45}
       />
 
-      {/* Post-processing: Bloom 0.8 + ChromaticAberration leve */}
+      {/* Post-process: solo Bloom suave + Vignette. Sin ChromaticAberration
+          (la AC sobre lanes blancos en movimiento provoca el shimmer percibido). */}
       {postprocessing ? (
         <EffectComposer multisampling={0}>
-          <Bloom intensity={0.8} luminanceThreshold={0.45} luminanceSmoothing={0.25} mipmapBlur />
-          <ChromaticAberration
-            offset={caOffset}
-            radialModulation={false}
-            modulationOffset={0}
-            blendFunction={BlendFunction.NORMAL}
-          />
-          <Vignette eskil={false} offset={0.2} darkness={0.6} />
+          <Bloom intensity={0.55} luminanceThreshold={0.6} luminanceSmoothing={0.2} mipmapBlur />
+          <Vignette eskil={false} offset={0.25} darkness={0.65} />
         </EffectComposer>
       ) : null}
     </>
@@ -223,18 +275,21 @@ export interface HeroSceneProps {
 }
 
 /**
- * HeroScene — escena 3D principal del hero de la landing.
+ * HeroScene — escena 3D del hero.
  *
- * Composición:
- *  - Carretera diagonal con líneas que se mueven hacia la cámara (loop infinito).
- *  - Edificios low-poly violetas a los costados (icosaedros, conos, cajas).
- *  - 2000 partículas cyan/violeta flotantes.
- *  - Fog #04020F para disolver el fondo.
- *  - PointLight cyan siguiendo al mouse + parallax ±5° en cámara.
- *  - Bloom + ChromaticAberration + Vignette.
+ * Cambios vs. la versión "epiléptica" anterior:
+ *  - Carretera = 3 segmentos físicos reciclados (NO scroll UV del shader).
+ *  - Velocidad lerp 0.03 → 0.10 (techo bajo, sin más rampa).
+ *  - Bloom intensity 0.55 con threshold 0.6 → sólo brillan las lane lines blancas.
+ *  - Eliminada Chromatic Aberration (gatillaba shimmer con el motion del road).
+ *  - Strips emisivos y antenas de los edificios al 40-60% de opacidad.
+ *  - Partículas 2000 → 900 con opacity 0.45 (sin "tormenta" de puntos).
+ *  - Fog (12, 55) más denso para tapar el horizonte y las uniones de segmentos.
+ *  - Luces principales bajadas (~50% menos intensidad).
+ *  - Camera parallax ±4° (antes ±5°).
  *
- * Todo el postprocessing se apaga automáticamente cuando el FPS baja o
- * el usuario tiene `prefers-reduced-motion`.
+ * Todo el postprocessing se sigue apagando si baja el FPS o el usuario tiene
+ * `prefers-reduced-motion`. En ese caso `target` cae a 0.015 (casi parado).
  */
 export function HeroScene({ className }: HeroSceneProps) {
   return (
