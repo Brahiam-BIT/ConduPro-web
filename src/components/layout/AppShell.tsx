@@ -9,6 +9,7 @@ import {
   ChevronsRight,
   Gauge,
   BookOpen,
+  FileText,
   GraduationCap,
   LineChart,
   LogOut,
@@ -38,12 +39,14 @@ const NAV_BY_ROLE: Record<string, NavItem[]> = {
     { label: 'Dashboard', to: ROUTES.STUDENT.DASHBOARD, icon: Gauge },
     { label: 'Mis clases', to: ROUTES.STUDENT.SCHEDULES, icon: CalendarClock },
     { label: 'Mis licencias', to: ROUTES.STUDENT.LICENSES, icon: GraduationCap },
+    { label: 'Material de estudio', to: ROUTES.STUDENT.MATERIALS, icon: FileText },
     { label: 'Agendar clase', to: ROUTES.STUDENT.BOOK, icon: CalendarPlus },
   ],
   [ROLES.INSTRUCTOR]: [
     { label: 'Dashboard', to: ROUTES.INSTRUCTOR.DASHBOARD, icon: Gauge },
     { label: 'Mis clases', to: ROUTES.INSTRUCTOR.SCHEDULES, icon: CalendarClock },
     { label: 'Mi disponibilidad', to: ROUTES.INSTRUCTOR.AVAILABILITY, icon: CalendarRange },
+    { label: 'Material teórico', to: ROUTES.INSTRUCTOR.MATERIALS, icon: FileText },
   ],
   [ROLES.ADMIN]: [
     { label: 'Dashboard', to: ROUTES.ADMIN.DASHBOARD, icon: Gauge },

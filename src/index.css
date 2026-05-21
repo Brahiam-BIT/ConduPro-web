@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800&display=swap');
+/* Visual update — fuentes del nuevo estilo dinámico */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -58,6 +60,60 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+ * Visual update — tokens del estilo dinámico (landing + auth)
+ * Sólo aplican a páginas que opten in con la clase `theme-dynamic`,
+ * para no interferir con el dashboard actual.
+ * ───────────────────────────────────────────────────────── */
+@layer base {
+  .theme-dynamic {
+    color-scheme: dark;
+    background-color: #04020f;
+    color: #f0eeff;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+  .theme-dynamic ::selection {
+    background-color: rgba(10, 255, 224, 0.35);
+    color: #04020f;
+  }
+  .theme-dynamic *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(10, 255, 224, 0.7);
+    border-radius: 6px;
+  }
+}
+
+@layer utilities {
+  .font-hero {
+    font-family: 'Syne', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  .font-body {
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+  .font-mono-brand {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: -0.01em;
+  }
+  .text-gradient-dynamic {
+    background-image: linear-gradient(135deg, #0affe0 0%, #7000ff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .ring-brand-glow {
+    box-shadow:
+      0 0 0 1px rgba(10, 255, 224, 0.35),
+      0 0 24px -4px rgba(10, 255, 224, 0.45);
+  }
+  .bg-grid-dynamic {
+    background-image:
+      linear-gradient(rgba(10, 255, 224, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(10, 255, 224, 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
   }
 }
 

@@ -13,8 +13,5 @@ export interface User {
   updatedAt: string;
 }
 
-export interface UserAvailabilitySlot {
-  dayOfWeek: number; // 0 = domingo .. 6 = sábado
-  hour: number; // 0..23
-  available: boolean;
-}
+/** @deprecated Usar tipos de `@/types/availability.types` */
+export type { UserAvailabilitySlot } from '@/types/availability.types';

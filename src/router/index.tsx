@@ -14,11 +14,15 @@ const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 const StudentDashboard = lazy(() => import('@/pages/student/StudentDashboard'));
 const StudentSchedules = lazy(() => import('@/pages/student/StudentSchedules'));
 const BookClass = lazy(() => import('@/pages/student/BookClass'));
+const BookClassTheory = lazy(() => import('@/pages/student/BookClassTheory'));
+const BookClassPractice = lazy(() => import('@/pages/student/BookClassPractice'));
 const StudentLicenses = lazy(() => import('@/pages/student/StudentLicenses'));
+const StudentStudyMaterials = lazy(() => import('@/pages/student/StudentStudyMaterials'));
 
 const InstructorDashboard = lazy(() => import('@/pages/instructor/InstructorDashboard'));
 const InstructorSchedules = lazy(() => import('@/pages/instructor/InstructorSchedules'));
 const InstructorAvailability = lazy(() => import('@/pages/instructor/InstructorAvailability'));
+const InstructorTheoryMaterials = lazy(() => import('@/pages/instructor/InstructorTheoryMaterials'));
 
 const AdminDashboard = lazy(() => import('@/pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('@/pages/admin/AdminUsers'));
@@ -30,6 +34,7 @@ const AdminReports = lazy(() => import('@/pages/admin/AdminReports'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('@/pages/UnauthorizedPage'));
 const DevComponentsPage = lazy(() => import('@/pages/DevComponentsPage'));
+const ThreeTestPage = lazy(() => import('@/pages/dev/ThreeTestPage'));
 
 function PageFallback() {
   return (
@@ -122,11 +127,45 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: ROUTES.STUDENT.MATERIALS,
+        element: (
+          <RoleRoute allow={[ROLES.STUDENT]}>
+            <Lazy>
+              <StudentStudyMaterials />
+            </Lazy>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.THEORY_CLASSES,
+        element: <Navigate to={ROUTES.STUDENT.BOOK_THEORY} replace />,
+      },
+      {
         path: ROUTES.STUDENT.BOOK,
         element: (
           <RoleRoute allow={[ROLES.STUDENT]}>
             <Lazy>
               <BookClass />
+            </Lazy>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.BOOK_THEORY,
+        element: (
+          <RoleRoute allow={[ROLES.STUDENT]}>
+            <Lazy>
+              <BookClassTheory />
+            </Lazy>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: ROUTES.STUDENT.BOOK_PRACTICE,
+        element: (
+          <RoleRoute allow={[ROLES.STUDENT]}>
+            <Lazy>
+              <BookClassPractice />
             </Lazy>
           </RoleRoute>
         ),
@@ -165,6 +204,16 @@ const router = createBrowserRouter([
           <RoleRoute allow={[ROLES.INSTRUCTOR]}>
             <Lazy>
               <InstructorAvailability />
+            </Lazy>
+          </RoleRoute>
+        ),
+      },
+      {
+        path: ROUTES.INSTRUCTOR.MATERIALS,
+        element: (
+          <RoleRoute allow={[ROLES.INSTRUCTOR]}>
+            <Lazy>
+              <InstructorTheoryMaterials />
             </Lazy>
           </RoleRoute>
         ),
@@ -247,6 +296,14 @@ const router = createBrowserRouter([
           element: (
             <Lazy>
               <DevComponentsPage />
+            </Lazy>
+          ),
+        },
+        {
+          path: ROUTES.DEV.THREE_TEST,
+          element: (
+            <Lazy>
+              <ThreeTestPage />
             </Lazy>
           ),
         },

@@ -16,6 +16,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Visual update — paleta dynamic/sport (landing, login, register)
+        brand: {
+          primary: '#0AFFE0',
+          secondary: '#7000FF',
+          dark: '#04020F',
+          surface: '#0D0A1E',
+          mid: '#1A1535',
+          light: '#F0EEFF',
+        },
         primary: {
           50: '#F5F3FF',
           100: '#EDE9FE',
@@ -87,6 +96,10 @@ const config: Config = {
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
         display: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
+        // Visual update — tipografías para landing/auth (no rompe el dashboard)
+        body: ['Inter', ...defaultTheme.fontFamily.sans],
+        hero: ['Syne', ...defaultTheme.fontFamily.sans],
+        mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
       },
       fontSize: {
         'display-2xl': ['4.5rem', { lineHeight: '1.05', letterSpacing: '-0.04em', fontWeight: '700' }],
@@ -130,6 +143,8 @@ const config: Config = {
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.22, 1, 0.36, 1)',
         snappy: 'cubic-bezier(0.5, 0, 0.1, 1)',
+        // Visual update — easing oficial del estilo dinámico
+        brand: 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
       transitionDuration: {
         '0': '0ms',
@@ -170,6 +185,23 @@ const config: Config = {
         'spin-slow': {
           to: { transform: 'rotate(360deg)' },
         },
+        // Visual update — keyframes para landing/auth
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
+        'bounce-soft': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(6px)' },
+        },
+        'gradient-shift': {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 200ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -180,6 +212,12 @@ const config: Config = {
         'sheet-up': 'sheet-up 250ms cubic-bezier(0.22, 1, 0.36, 1)',
         shimmer: 'shimmer 1.8s linear infinite',
         'spin-slow': 'spin-slow 1.2s linear infinite',
+        // Visual update — animaciones del estilo dinámico
+        float: 'float 4s cubic-bezier(0.16, 1, 0.3, 1) infinite',
+        'float-slow': 'float 7s cubic-bezier(0.16, 1, 0.3, 1) infinite',
+        marquee: 'marquee 28s linear infinite',
+        'bounce-soft': 'bounce-soft 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite',
+        'gradient-shift': 'gradient-shift 6s ease infinite',
       },
       backgroundImage: {
         'gradient-brand': 'linear-gradient(135deg, #7C3AED 0%, #A78BFA 50%, #F59E0B 100%)',
@@ -187,6 +225,12 @@ const config: Config = {
         'gradient-dark': 'linear-gradient(135deg, #2E1065 0%, #0B0A14 100%)',
         shimmer:
           'linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.08) 50%, transparent 100%)',
+        // Visual update — gradiente oficial cyan→violeta
+        'gradient-dynamic': 'linear-gradient(135deg, #0AFFE0 0%, #7000FF 100%)',
+        'gradient-dynamic-soft':
+          'linear-gradient(135deg, rgba(10,255,224,0.18) 0%, rgba(112,0,255,0.18) 100%)',
+        'gradient-dynamic-radial':
+          'radial-gradient(circle at 30% 30%, rgba(10,255,224,0.25) 0%, rgba(112,0,255,0.2) 35%, rgba(4,2,15,0) 70%)',
       },
     },
   },

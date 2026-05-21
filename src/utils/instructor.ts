@@ -7,11 +7,12 @@ import {
   isSameDay,
   isToday,
   parseISO,
+  startOfDay,
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
+import type { AvailabilityCellData } from '@/types/availability.types';
 import type { Schedule } from '@/types/schedule.types';
-import type { UserAvailabilitySlot } from '@/types/user.types';
 
 export function formatStudentName(
   student: Pick<{ firstName: string; lastName: string }, 'firstName' | 'lastName'>,
@@ -23,26 +24,20 @@ export function canCompleteSchedule(schedule: Schedule): boolean {
   return schedule.status === 'PENDING' || schedule.status === 'CONFIRMED';
 }
 
-/** Columnas lun–dom → dayOfWeek del backend (0=domingo). */
-export const WEEKDAY_COLUMNS: { label: string; dayOfWeek: number }[] = [
-  { label: 'Lun', dayOfWeek: 1 },
-  { label: 'Mar', dayOfWeek: 2 },
-  { label: 'Mié', dayOfWeek: 3 },
-  { label: 'Jue', dayOfWeek: 4 },
-  { label: 'Vie', dayOfWeek: 5 },
-  { label: 'Sáb', dayOfWeek: 6 },
-  { label: 'Dom', dayOfWeek: 0 },
-];
+import {
+  AVAILABILITY_HOURS,
+  availabilityDateKey,
+  isDateInWorkWeek,
+  WORK_WEEK_DAYS,
+} from '@/utils/availability';
+
+/** Columnas lun–vie (academia solo días laborales). */
+export const WEEKDAY_COLUMNS = WORK_WEEK_DAYS;
 
 /** Filas del mini calendario del dashboard (8 franjas desde las 7:00). */
 export const DASHBOARD_HOUR_ROWS = [7, 8, 9, 10, 11, 12, 13, 14] as const;
 
-/** Franjas horarias de disponibilidad 7:00–19:00. */
-export const AVAILABILITY_HOURS = Array.from({ length: 13 }, (_, i) => i + 7);
-
-export function availabilitySlotKey(dayOfWeek: number, hour: number): string {
-  return `${dayOfWeek}-${hour}`;
-}
+export { AVAILABILITY_HOURS, availabilityDateKey, WORK_WEEK_DAYS };
 
 export interface InstructorDashboardMetrics {
   todayClasses: Schedule[];
@@ -115,50 +110,47 @@ export function schedulesForWeekCell(
   });
 }
 
-export function buildFullAvailabilityGrid(
-  saved: UserAvailabilitySlot[],
-): Map<string, boolean> {
-  const map = new Map<string, boolean>();
-  for (const col of WEEKDAY_COLUMNS) {
-    for (const hour of AVAILABILITY_HOURS) {
-      map.set(availabilitySlotKey(col.dayOfWeek, hour), false);
-    }
+function scheduleToCellPreview(schedule: Schedule): AvailabilityCellData {
+  if (schedule.type === 'PRACTICE') {
+    return {
+      available: true,
+      classType: 'PRACTICE',
+      recurrence: 'WEEKLY',
+      theoryTopicId: null,
+      licenseCategoryId: null,
+    };
   }
-  for (const slot of saved) {
-    map.set(availabilitySlotKey(slot.dayOfWeek, slot.hour), slot.available);
-  }
-  return map;
+  return {
+    available: true,
+    classType: 'THEORY',
+    theoryTopicId: schedule.theoryTopic?.id ?? null,
+    theoryTopicTitle: schedule.theoryTopic?.title,
+    licenseCategoryId: schedule.licenseCategory?.id ?? null,
+    licenseCategoryCode: schedule.licenseCategory?.code,
+    recurrence: 'WEEKLY',
+  };
 }
 
-export function mapToAvailabilitySlots(map: Map<string, boolean>): UserAvailabilitySlot[] {
-  const slots: UserAvailabilitySlot[] = [];
-  map.forEach((available, key) => {
-    const [dayStr, hourStr] = key.split('-');
-    const dayOfWeek = Number(dayStr);
-    const hour = Number(hourStr);
-    if (!Number.isNaN(dayOfWeek) && !Number.isNaN(hour)) {
-      slots.push({ dayOfWeek, hour, available });
-    }
-  });
-  return slots;
-}
-
-/** Clases agendadas que bloquean edición en la grilla de disponibilidad. */
-export function scheduledSlotsForAvailability(
+/** Clases ya agendadas en la semana visible (morado, solo lectura). */
+export function scheduledCellsForAvailabilityWeek(
   schedules: Schedule[],
-): Set<string> {
-  const set = new Set<string>();
+  weekMonday: Date,
+): Map<string, AvailabilityCellData> {
+  const map = new Map<string, AvailabilityCellData>();
   for (const s of schedules) {
     if (s.status === 'CANCELLED') continue;
     const start = parseISO(s.startAt);
+    if (!isDateInWorkWeek(start, weekMonday)) continue;
     const day = start.getDay();
+    if (day < 1 || day > 5) continue;
     const startHour = getHours(start);
     const endHour = getHours(parseISO(s.endAt));
+    const preview = scheduleToCellPreview(s);
     for (let h = startHour; h < endHour; h++) {
       if (AVAILABILITY_HOURS.includes(h)) {
-        set.add(availabilitySlotKey(day, h));
+        map.set(availabilityDateKey(startOfDay(start), h), preview);
       }
     }
   }
-  return set;
+  return map;
 }

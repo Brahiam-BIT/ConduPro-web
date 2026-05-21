@@ -84,7 +84,9 @@ export const api = axios.create({
 
 api.interceptors.response.use(
   (response) => {
-    response.data = unwrapApiResponse(response.data);
+    if (!(response.data instanceof Blob) && !(response.data instanceof ArrayBuffer)) {
+      response.data = unwrapApiResponse(response.data);
+    }
     return response;
   },
   (error) => Promise.reject(error),

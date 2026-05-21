@@ -67,17 +67,58 @@ export const GUIDED_TOURS: GuidedTourDefinition[] = [
     ],
   },
   {
+    route: ROUTES.STUDENT.MATERIALS,
+    steps: [
+      {
+        title: 'Material de tus clases',
+        content:
+          'Aquí aparecen los documentos que subió tu instructor, agrupados por licencia y tema teórico.',
+      },
+      {
+        title: 'Descargar',
+        content:
+          'Solo ves material de licencias en las que estás matriculado (activa o completada). Pulsa Descargar en cada archivo.',
+      },
+    ],
+  },
+  {
     route: ROUTES.STUDENT.BOOK,
     steps: [
       {
-        title: 'Flujo de agendamiento',
+        title: 'Todo empieza aquí',
         content:
-          'Sigue los pasos: tipo de clase, fecha preferida y confirmación. Las prácticas requieren matrícula activa.',
+          'Elige teórica o práctica. Teórica: sesiones con cupo por tema. Práctica: fecha y asignación automática.',
+      },
+      {
+        title: 'Paso 2',
+        content: 'Según el tipo, continúas al horario correspondiente. Puedes volver para cambiar el tipo.',
+      },
+    ],
+  },
+  {
+    route: ROUTES.STUDENT.BOOK_THEORY,
+    steps: [
+      {
+        title: 'Clases según tu licencia',
+        content: 'Solo ves temas pendientes de tus matrículas activas.',
+      },
+      {
+        title: 'Cupos e inscripción',
+        content:
+          'Horarios agrupados por día. Elige la hora y pulsa Inscribir (ej. 0/6 cupos).',
+      },
+    ],
+  },
+  {
+    route: ROUTES.STUDENT.BOOK_PRACTICE,
+    steps: [
+      {
+        title: 'Matrícula activa',
+        content: 'Las prácticas requieren matrícula activa en la licencia.',
       },
       {
         title: 'Asignación automática',
-        content:
-          'El sistema busca instructor, vehículo y horario disponibles según tu elección y la disponibilidad de la escuela.',
+        content: 'Elige la fecha; el sistema asigna instructor, vehículo y horario.',
       },
     ],
   },
@@ -115,14 +156,38 @@ export const GUIDED_TOURS: GuidedTourDefinition[] = [
     route: ROUTES.INSTRUCTOR.AVAILABILITY,
     steps: [
       {
-        title: 'Tu grilla semanal',
+        title: 'Semana con fechas',
         content:
-          'Marca las franjas horarias en las que puedes dar clase. Los bloques con clase agendada no se pueden editar.',
+          'Arriba de la grilla ves el rango de fechas (ej. 20 – 24 may). Cambia de semana para ver qué días ya tienen clase agendada.',
       },
       {
-        title: 'Guardar cambios',
+        title: 'Modo práctica o teoría',
         content:
-          'Pulsa Guardar disponibilidad para que el sistema use tus horarios al asignar nuevas clases.',
+          'Elige qué marcas. En teoría seleccionas la materia una vez; las columnas muestran el día concreto (lun 20, mar 21…).',
+      },
+      {
+        title: 'Atajos',
+        content:
+          'Clic en el encabezado del día o en la hora rellena en bloque. «Copiar a lun–vie» repite la franja en toda la semana laboral.',
+      },
+      {
+        title: 'Guardar',
+        content: 'Pulsa Guardar cuando termines.',
+      },
+    ],
+  },
+  {
+    route: ROUTES.INSTRUCTOR.MATERIALS,
+    steps: [
+      {
+        title: 'Subir apoyo de clase',
+        content:
+          'Elige el tema teórico, adjunta PDF, Word, PowerPoint o imagen (hasta 20 MB) y pulsa Subir.',
+      },
+      {
+        title: 'Quién lo ve',
+        content:
+          'Solo estudiantes matriculados (activos o que completaron) en la licencia de ese tema pueden descargarlo.',
       },
     ],
   },

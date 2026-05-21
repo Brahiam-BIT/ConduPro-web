@@ -7,13 +7,19 @@ export const ROUTES = {
     DASHBOARD: '/student/dashboard',
     SCHEDULES: '/student/schedules',
     BOOK: '/student/book',
+    BOOK_THEORY: '/student/book/theory',
+    BOOK_PRACTICE: '/student/book/practice',
     LICENSES: '/student/licenses',
+    MATERIALS: '/student/materials',
+    /** @deprecated Usar BOOK_THEORY — redirige en el router */
+    THEORY_CLASSES: '/student/theory-classes',
   },
   INSTRUCTOR: {
     ROOT: '/instructor',
     DASHBOARD: '/instructor/dashboard',
     SCHEDULES: '/instructor/schedules',
     AVAILABILITY: '/instructor/availability',
+    MATERIALS: '/instructor/materials',
   },
   ADMIN: {
     ROOT: '/admin',
@@ -26,6 +32,7 @@ export const ROUTES = {
   },
   DEV: {
     COMPONENTS: '/dev/components',
+    THREE_TEST: '/dev/three-test',
   },
 } as const;
 

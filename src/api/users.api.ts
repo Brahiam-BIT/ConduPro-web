@@ -1,5 +1,6 @@
 import { api } from '@/lib/axios';
-import type { User, UserAvailabilitySlot } from '@/types/user.types';
+import type { User } from '@/types/user.types';
+import type { UserAvailabilitySlot } from '@/types/availability.types';
 import type { PaginatedResponse } from '@/types/api.types';
 import type { Role } from '@/constants/roles';
 

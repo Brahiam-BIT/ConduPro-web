@@ -21,7 +21,19 @@ export const PAGE_META: Record<string, PageMeta> = {
   },
   [ROUTES.STUDENT.BOOK]: {
     title: 'Agendar clase',
-    subtitle: 'Selecciona el tipo de clase y el horario que prefieras',
+    subtitle: 'Elige si la clase es teórica o práctica',
+  },
+  [ROUTES.STUDENT.BOOK_THEORY]: {
+    title: 'Agendar clase teórica',
+    subtitle: 'Inscríbete en el día y hora que prefieras según cupos e instructor',
+  },
+  [ROUTES.STUDENT.BOOK_PRACTICE]: {
+    title: 'Agendar clase práctica',
+    subtitle: 'Elige la fecha; el sistema asigna instructor y vehículo disponibles',
+  },
+  [ROUTES.STUDENT.MATERIALS]: {
+    title: 'Material de estudio',
+    subtitle: 'Descarga diapositivas y documentos de tus clases teóricas',
   },
   [ROUTES.INSTRUCTOR.DASHBOARD]: {
     title: 'Dashboard',
@@ -33,7 +45,11 @@ export const PAGE_META: Record<string, PageMeta> = {
   },
   [ROUTES.INSTRUCTOR.AVAILABILITY]: {
     title: 'Mi disponibilidad',
-    subtitle: 'Marca los horarios en los que puedes impartir clases',
+    subtitle: 'Marca lun–vie con fechas visibles; navega por semana para ver clases ya agendadas',
+  },
+  [ROUTES.INSTRUCTOR.MATERIALS]: {
+    title: 'Material teórico',
+    subtitle: 'Sube PDF, diapositivas o guías por tema para tus estudiantes matriculados',
   },
   [ROUTES.ADMIN.DASHBOARD]: {
     title: 'Panel de administración',

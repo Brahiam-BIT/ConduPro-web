@@ -42,4 +42,15 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          three: ['three', '@react-three/fiber', '@react-three/drei', '@react-three/postprocessing'],
+          gsap: ['gsap', '@gsap/react'],
+          framer: ['framer-motion'],
+        },
+      },
+    },
+  },
 });
