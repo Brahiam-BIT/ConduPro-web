@@ -8,6 +8,7 @@ import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
 import { AppShell } from '@/components/layout/AppShell';
 
+const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
 
@@ -51,7 +52,11 @@ function Lazy({ children }: { children: ReactNode }) {
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to={ROUTES.LOGIN} replace />,
+    element: (
+      <Lazy>
+        <LandingPage />
+      </Lazy>
+    ),
   },
   {
     path: ROUTES.LOGIN,
