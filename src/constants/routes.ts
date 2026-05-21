@@ -32,7 +32,6 @@ export const ROUTES = {
   },
   DEV: {
     COMPONENTS: '/dev/components',
-    THREE_TEST: '/dev/three-test',
   },
 } as const;
 

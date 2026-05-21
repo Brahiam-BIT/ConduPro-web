@@ -35,7 +35,6 @@ const AdminReports = lazy(() => import('@/pages/admin/AdminReports'));
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('@/pages/UnauthorizedPage'));
 const DevComponentsPage = lazy(() => import('@/pages/DevComponentsPage'));
-const ThreeTestPage = lazy(() => import('@/pages/dev/ThreeTestPage'));
 
 function PageFallback() {
   return (
@@ -301,14 +300,6 @@ const router = createBrowserRouter([
           element: (
             <Lazy>
               <DevComponentsPage />
-            </Lazy>
-          ),
-        },
-        {
-          path: ROUTES.DEV.THREE_TEST,
-          element: (
-            <Lazy>
-              <ThreeTestPage />
             </Lazy>
           ),
         },

@@ -44,15 +44,11 @@ export function KpiCard({ label, value, icon, trend, isLoading, className }: Kpi
       className={cn('relative overflow-hidden', className)}
     >
       {icon ? (
-        <div className="absolute right-4 top-4 text-primary-500/40 dark:text-primary-400/30">
-          {icon}
-        </div>
+        <div className="absolute right-4 top-4 text-text-tertiary">{icon}</div>
       ) : null}
-      <p className="text-label text-surface-500 dark:text-surface-400">{label}</p>
-      <p className="mt-1 text-display-sm text-surface-900 dark:text-surface-50">{renderValue}</p>
-      {trend ? (
-        <p className="mt-1 text-caption text-surface-500 dark:text-surface-400">{trend}</p>
-      ) : null}
+      <p className="text-sm font-medium text-text-secondary">{label}</p>
+      <p className="mt-1 text-3xl font-semibold tracking-tight text-text-primary">{renderValue}</p>
+      {trend ? <p className="mt-1 text-xs text-text-secondary">{trend}</p> : null}
     </MotionCard>
   );
 }

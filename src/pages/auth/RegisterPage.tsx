@@ -1,9 +1,9 @@
-import { Suspense, lazy, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Mail, Phone, User } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { FloatingField, FloatingPasswordField } from '@/components/auth/FloatingField';
 import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 import { useAuth } from '@/hooks/useAuth';
@@ -11,14 +11,12 @@ import { extractApiErrorMessage } from '@/lib/axios';
 import { registerSchema, type RegisterFormValues } from '@/schemas/auth.schema';
 import { ROUTES } from '@/constants/routes';
 
-const RegisterScene = lazy(() => import('@/components/three/RegisterScene'));
-
-const BRAND_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
 const STEP_VARIANTS = {
-  enter: (d: 1 | -1) => ({ x: d * 50, opacity: 0 }),
-  center: { x: 0, opacity: 1, transition: { duration: 0.45, ease: BRAND_EASE } },
-  exit: (d: 1 | -1) => ({ x: -d * 50, opacity: 0, transition: { duration: 0.3, ease: BRAND_EASE } }),
+  enter: (d: 1 | -1) => ({ x: d * 40, opacity: 0 }),
+  center: { x: 0, opacity: 1, transition: { duration: 0.35, ease: EASE } },
+  exit: (d: 1 | -1) => ({ x: -d * 40, opacity: 0, transition: { duration: 0.25, ease: EASE } }),
 };
 
 type StepKey = 1 | 2 | 3;
@@ -29,12 +27,17 @@ const STEP_FIELDS: Record<StepKey, Array<keyof RegisterFormValues>> = {
   3: [],
 };
 
-function SceneFallback() {
-  return (
-    <div aria-hidden className="absolute inset-0 bg-gradient-dynamic-radial bg-brand-dark" />
-  );
-}
-
+/**
+ * RegisterPage — wizard de 3 pasos minimalista (estilo Apple).
+ *
+ *  - Fondo con un gradiente radial muy sutil (azul → gris → blanco).
+ *  - Card central blanca con shadow-lg, ancho max-w-md.
+ *  - Stepper visual = 3 círculos numerados conectados por una línea que se
+ *    "llena" con accent al avanzar.
+ *  - Inputs Apple (label encima, sin íconos).
+ *  - Animación entre pasos: slide horizontal + fade (Framer Motion).
+ *  - Éxito: checkmark animado accent + texto.
+ */
 export default function RegisterPage() {
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
@@ -94,7 +97,7 @@ export default function RegisterPage() {
         password: values.password,
       });
       setSuccess(true);
-      window.setTimeout(() => navigate(`${ROUTES.LOGIN}?registered=true`, { replace: true }), 2000);
+      window.setTimeout(() => navigate(`${ROUTES.LOGIN}?registered=true`, { replace: true }), 1800);
     } catch (error) {
       setFormError(extractApiErrorMessage(error, 'No se pudo crear la cuenta. Intenta de nuevo.'));
     }
@@ -106,244 +109,251 @@ export default function RegisterPage() {
   const summary = getValues();
 
   return (
-    <div className="theme-dynamic relative grid min-h-screen grid-cols-1 overflow-hidden bg-brand-dark lg:grid-cols-2">
-      {/* Botón "Volver al inicio" — flota sobre todo el layout */}
+    <div
+      className="relative flex min-h-screen items-center justify-center px-4 py-10"
+      style={{
+        background:
+          'radial-gradient(ellipse at 60% 0%, #E8F0FE 0%, #F5F5F7 40%, #FFFFFF 100%)',
+      }}
+    >
+      {/* Botón "Volver" */}
       <Link
         to="/"
-        className="group absolute left-5 top-5 z-50 inline-flex items-center gap-2 text-sm text-white/50 transition-colors duration-200 hover:text-brand-primary"
+        className="group absolute left-6 top-6 z-50 inline-flex items-center gap-2 text-sm font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary"
       >
         <ArrowLeft
           size={16}
-          className="transition-transform duration-200 group-hover:-translate-x-1"
+          className="transition-transform duration-150 group-hover:-translate-x-0.5"
         />
-        <span className="hidden sm:inline">Volver al inicio</span>
+        <span className="hidden sm:inline">Volver</span>
       </Link>
 
-      <aside className="relative hidden overflow-hidden lg:block">
-        <Suspense fallback={<SceneFallback />}>
-          <RegisterScene className="absolute inset-0" />
-        </Suspense>
-        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-10 xl:p-14">
-          <div className="inline-flex items-center gap-2 self-start rounded-full border border-brand-primary/30 bg-brand-surface/50 px-4 py-1.5 font-mono-brand text-[10px] uppercase tracking-[0.4em] text-brand-light/70 backdrop-blur">
-            <span className="size-1.5 rounded-full bg-brand-primary shadow-[0_0_8px_#0AFFE0]" />
-            Únete a ConduPro
-          </div>
-          <div className="max-w-md space-y-3">
-            <p className="font-mono-brand text-xs uppercase tracking-[0.35em] text-brand-primary">
-              Crea tu cuenta
-            </p>
-            <h1 className="font-hero text-5xl font-bold leading-[1.05] text-brand-light">
-              Empieza tu <span className="text-gradient-dynamic">viaje</span>.
-            </h1>
-            <p className="max-w-sm text-sm text-brand-light/70">
-              Tres pasos rápidos y ya podrás agendar tu primera clase.
-            </p>
-          </div>
-          <div className="text-[11px] uppercase tracking-[0.3em] text-brand-light/40">
-            © {new Date().getFullYear()} ConduPro
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: EASE }}
+        className="w-full max-w-md rounded-3xl bg-white p-10 shadow-lg"
+      >
+        {/* Logo */}
+        <div className="mb-6 flex items-center gap-2.5">
+          <span className="grid size-9 place-items-center rounded-xl bg-accent text-white">
+            <SteeringIcon className="size-4" />
+          </span>
+          <span className="text-lg font-semibold tracking-tight text-text-primary">
+            ConduPro
+          </span>
         </div>
-      </aside>
 
-      <section className="relative flex min-h-screen items-center justify-center bg-brand-surface px-6 py-12 sm:px-10">
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-grid-dynamic opacity-40" />
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-dynamic-radial opacity-20" />
+        <Stepper current={step} />
 
-        <motion.div
-          initial={{ x: 60, opacity: 0 }}
-          animate={{ x: 0, opacity: 1, transition: { duration: 0.7, ease: BRAND_EASE } }}
-          className="relative z-10 w-full max-w-md"
-        >
-          <div className="mb-8 flex items-center justify-between">
-            <Link to={ROUTES.LOGIN} className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-brand-light/60 transition-colors hover:text-brand-light">
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Volver
-            </Link>
-            <span className="font-mono-brand text-[11px] uppercase tracking-[0.3em] text-brand-light/50">
-              Paso {step} / 3
-            </span>
-          </div>
+        <div className="mt-7 space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-text-primary">
+            {step === 1
+              ? 'Cuéntanos sobre ti'
+              : step === 2
+                ? 'Asegura tu cuenta'
+                : 'Confirma tus datos'}
+          </h1>
+          <p className="text-sm text-text-secondary">
+            {step === 1
+              ? 'Comencemos con lo básico.'
+              : step === 2
+                ? 'Crea credenciales seguras.'
+                : 'Revisa que todo esté correcto.'}
+          </p>
+        </div>
 
-          <Stepper current={step} />
-
-          <div className="mt-8 space-y-2">
-            <h2 className="font-hero text-3xl font-bold text-brand-light">
-              {step === 1 ? 'Cuéntanos sobre ti' : step === 2 ? 'Asegura tu cuenta' : 'Confirma tus datos'}
-            </h2>
-            <p className="text-sm text-brand-light/60">
-              {step === 1
-                ? 'Comencemos con lo básico.'
-                : step === 2
-                  ? 'Crea credenciales seguras.'
-                  : 'Revisa que todo esté correcto.'}
-            </p>
-          </div>
-
-          <AnimatePresence mode="wait" custom={direction}>
-            {!success ? (
-              <motion.form
-                key={`step-${step}`}
-                custom={direction}
-                variants={STEP_VARIANTS}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                onSubmit={handleSubmit(onSubmit)}
-                className="mt-6 space-y-5"
-                noValidate
-              >
-                {step === 1 ? (
-                  <>
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <FloatingField
-                        label="Nombre"
-                        autoComplete="given-name"
-                        iconLeft={<User className="h-4 w-4" aria-hidden />}
-                        errorMessage={showError('firstName')}
-                        {...register('firstName')}
-                      />
-                      <FloatingField
-                        label="Apellido"
-                        autoComplete="family-name"
-                        errorMessage={showError('lastName')}
-                        {...register('lastName')}
-                      />
-                    </div>
-                    <FloatingField
-                      label="Teléfono"
-                      type="tel"
-                      autoComplete="tel"
-                      iconLeft={<Phone className="h-4 w-4" aria-hidden />}
-                      errorMessage={showError('phone')}
-                      {...register('phone')}
-                    />
-                  </>
-                ) : null}
-
-                {step === 2 ? (
-                  <>
-                    <FloatingField
-                      label="Correo electrónico"
-                      type="email"
-                      autoComplete="email"
-                      iconLeft={<Mail className="h-4 w-4" aria-hidden />}
-                      errorMessage={showError('email')}
-                      {...register('email')}
-                    />
-                    <div className="space-y-2">
-                      <FloatingPasswordField
-                        label="Contraseña"
-                        autoComplete="new-password"
-                        errorMessage={showError('password')}
-                        {...register('password')}
-                      />
-                      <div className="px-1">
-                        <PasswordStrengthIndicator password={passwordValue} showChecks={false} />
-                      </div>
-                    </div>
-                    <FloatingPasswordField
-                      label="Confirmar contraseña"
-                      autoComplete="new-password"
-                      errorMessage={showError('confirmPassword')}
-                      {...register('confirmPassword')}
-                    />
-                  </>
-                ) : null}
-
-                {step === 3 ? (
-                  <SummaryCard
-                    items={[
-                      { label: 'Nombre completo', value: `${summary.firstName} ${summary.lastName}` },
-                      { label: 'Correo', value: summary.email },
-                      { label: 'Teléfono', value: summary.phone },
-                    ]}
-                    acceptedTerms={acceptedTerms}
-                    onChangeTerms={setAcceptedTerms}
-                  />
-                ) : null}
-
-                {formError ? (
-                  <p
-                    role="alert"
-                    className="rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2.5 text-sm text-rose-300"
-                  >
-                    {formError}
-                  </p>
-                ) : null}
-
-                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-                  {step > 1 ? (
-                    <button
-                      type="button"
-                      onClick={prev}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-brand-mid/70 bg-transparent px-5 text-sm font-medium text-brand-light/80 transition-colors duration-300 ease-brand hover:border-brand-primary/40 hover:text-brand-light"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Atrás
-                    </button>
-                  ) : (
-                    <span />
-                  )}
-
-                  {step < 3 ? (
-                    <button
-                      type="button"
-                      onClick={next}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-dynamic px-6 font-mono-brand text-xs uppercase tracking-[0.25em] text-brand-dark transition-transform duration-300 ease-brand hover:translate-y-[-1px] hover:shadow-[0_14px_36px_-16px_rgba(10,255,224,0.6)]"
-                    >
-                      Siguiente
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || !acceptedTerms}
-                      className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-gradient-dynamic px-6 font-mono-brand text-xs uppercase tracking-[0.25em] text-brand-dark transition-transform duration-300 ease-brand hover:translate-y-[-1px] hover:shadow-[0_14px_36px_-16px_rgba(10,255,224,0.6)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-                    >
-                      {isSubmitting ? 'Creando…' : 'Crear mi cuenta'}
-                      <Check className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              </motion.form>
-            ) : (
-              <SuccessCard key="success" />
-            )}
-          </AnimatePresence>
-
+        <AnimatePresence mode="wait" custom={direction}>
           {!success ? (
-            <p className="mt-8 text-center text-sm text-brand-light/60">
-              ¿Ya tienes cuenta?{' '}
-              <Link
-                to={ROUTES.LOGIN}
-                className="font-semibold text-brand-primary transition-colors hover:text-brand-light"
-              >
-                Inicia sesión
-              </Link>
-            </p>
-          ) : null}
-        </motion.div>
-      </section>
+            <motion.form
+              key={`step-${step}`}
+              custom={direction}
+              variants={STEP_VARIANTS}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              onSubmit={handleSubmit(onSubmit)}
+              className="mt-6 space-y-5"
+              noValidate
+            >
+              {step === 1 ? (
+                <>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <FloatingField
+                      label="Nombre"
+                      autoComplete="given-name"
+                      placeholder="María"
+                      errorMessage={showError('firstName')}
+                      {...register('firstName')}
+                    />
+                    <FloatingField
+                      label="Apellido"
+                      autoComplete="family-name"
+                      placeholder="Pérez"
+                      errorMessage={showError('lastName')}
+                      {...register('lastName')}
+                    />
+                  </div>
+                  <FloatingField
+                    label="Teléfono"
+                    type="tel"
+                    autoComplete="tel"
+                    placeholder="+57 300 000 0000"
+                    errorMessage={showError('phone')}
+                    {...register('phone')}
+                  />
+                </>
+              ) : null}
+
+              {step === 2 ? (
+                <>
+                  <FloatingField
+                    label="Correo electrónico"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="tu@email.com"
+                    errorMessage={showError('email')}
+                    {...register('email')}
+                  />
+                  <div className="space-y-2">
+                    <FloatingPasswordField
+                      label="Contraseña"
+                      autoComplete="new-password"
+                      placeholder="••••••••"
+                      errorMessage={showError('password')}
+                      {...register('password')}
+                    />
+                    <div className="px-1">
+                      <PasswordStrengthIndicator password={passwordValue} showChecks={false} />
+                    </div>
+                  </div>
+                  <FloatingPasswordField
+                    label="Confirmar contraseña"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    errorMessage={showError('confirmPassword')}
+                    {...register('confirmPassword')}
+                  />
+                </>
+              ) : null}
+
+              {step === 3 ? (
+                <SummaryCard
+                  items={[
+                    { label: 'Nombre completo', value: `${summary.firstName} ${summary.lastName}` },
+                    { label: 'Correo', value: summary.email },
+                    { label: 'Teléfono', value: summary.phone },
+                  ]}
+                  acceptedTerms={acceptedTerms}
+                  onChangeTerms={setAcceptedTerms}
+                />
+              ) : null}
+
+              {formError ? (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-error-500/30 bg-error-50 px-3 py-2.5 text-sm text-error-700"
+                >
+                  {formError}
+                </p>
+              ) : null}
+
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
+                {step > 1 ? (
+                  <button
+                    type="button"
+                    onClick={prev}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Atrás
+                  </button>
+                ) : (
+                  <span />
+                )}
+
+                {step < 3 ? (
+                  <button
+                    type="button"
+                    onClick={next}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent-hover"
+                  >
+                    Continuar
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !acceptedTerms}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSubmitting ? 'Creando…' : 'Crear cuenta'}
+                    <Check className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </motion.form>
+          ) : (
+            <SuccessCard key="success" />
+          )}
+        </AnimatePresence>
+
+        {!success ? (
+          <p className="mt-8 text-center text-sm text-text-secondary">
+            ¿Ya tienes cuenta?{' '}
+            <Link
+              to={ROUTES.LOGIN}
+              className="font-medium text-accent transition-colors hover:text-accent-hover"
+            >
+              Inicia sesión
+            </Link>
+          </p>
+        ) : null}
+      </motion.div>
     </div>
   );
 }
 
+/* ─── Helpers ─────────────────────────────────────────────────────── */
+
 function Stepper({ current }: { current: StepKey }) {
   return (
-    <div className="grid grid-cols-3 gap-3">
-      {[1, 2, 3].map((n) => {
-        const active = current >= n;
+    <div className="flex items-center">
+      {[1, 2, 3].map((n, idx) => {
+        const completed = current > n;
+        const active = current === n;
         return (
-          <div key={n} className="space-y-2">
-            <div
-              className={[
-                'h-1.5 rounded-full transition-all duration-500 ease-brand',
-                active ? 'bg-gradient-dynamic shadow-[0_0_12px_rgba(10,255,224,0.45)]' : 'bg-brand-mid/60',
-              ].join(' ')}
-            />
-            <p className={['font-mono-brand text-[10px] uppercase tracking-[0.3em]', active ? 'text-brand-light' : 'text-brand-light/40'].join(' ')}>
-              {n === 1 ? 'Datos' : n === 2 ? 'Seguridad' : 'Confirmar'}
-            </p>
+          <div key={n} className="flex flex-1 items-center">
+            <div className="flex flex-col items-center">
+              <div
+                className={[
+                  'grid size-8 place-items-center rounded-full text-sm font-medium transition-colors duration-200',
+                  completed
+                    ? 'bg-accent/15 text-accent'
+                    : active
+                      ? 'bg-accent text-white'
+                      : 'bg-bg-tertiary text-text-tertiary',
+                ].join(' ')}
+              >
+                {completed ? <Check className="size-4" strokeWidth={3} /> : n}
+              </div>
+              <span
+                className={[
+                  'mt-2 text-xs font-medium',
+                  active || completed ? 'text-text-primary' : 'text-text-tertiary',
+                ].join(' ')}
+              >
+                {n === 1 ? 'Datos' : n === 2 ? 'Seguridad' : 'Confirmar'}
+              </span>
+            </div>
+            {idx < 2 ? (
+              <div className="mx-2 mt-[-18px] h-px flex-1 bg-border">
+                <div
+                  className="h-full bg-accent transition-all duration-300"
+                  style={{ width: completed ? '100%' : '0%' }}
+                />
+              </div>
+            ) : null}
           </div>
         );
       })}
@@ -362,29 +372,29 @@ function SummaryCard({
 }) {
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-brand-mid/70 bg-brand-surface/40 p-5">
+      <div className="rounded-2xl border border-border bg-bg-secondary p-5">
         <ul className="space-y-3 text-sm">
           {items.map((it) => (
             <li key={it.label} className="flex items-center justify-between gap-4">
-              <span className="font-mono-brand text-[11px] uppercase tracking-[0.25em] text-brand-light/50">
-                {it.label}
+              <span className="text-text-secondary">{it.label}</span>
+              <span className="truncate text-right font-medium text-text-primary">
+                {it.value || '—'}
               </span>
-              <span className="truncate text-right text-brand-light">{it.value || '—'}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <label className="flex cursor-pointer items-start gap-3 text-sm text-brand-light/70">
+      <label className="flex cursor-pointer items-start gap-3 text-sm text-text-secondary">
         <input
           type="checkbox"
           checked={acceptedTerms}
           onChange={(e) => onChangeTerms(e.target.checked)}
-          className="mt-1 size-4 cursor-pointer rounded border-brand-mid bg-brand-surface text-brand-primary focus:ring-brand-primary"
+          className="mt-0.5 size-4 cursor-pointer rounded border-border text-accent focus:ring-accent"
         />
         <span>
-          Acepto los <span className="underline decoration-brand-primary/50 underline-offset-4">términos y condiciones</span>{' '}
-          y la <span className="underline decoration-brand-primary/50 underline-offset-4">política de privacidad</span> de ConduPro.
+          Acepto los <span className="text-accent">términos y condiciones</span> y la{' '}
+          <span className="text-accent">política de privacidad</span> de ConduPro.
         </span>
       </label>
     </div>
@@ -395,13 +405,15 @@ function SuccessCard() {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1, transition: { duration: 0.5, ease: BRAND_EASE } }}
-      className="mt-8 flex flex-col items-center gap-5 rounded-2xl border border-brand-primary/30 bg-brand-primary/10 p-8 text-center"
+      animate={{ opacity: 1, scale: 1, transition: { duration: 0.4, ease: EASE } }}
+      className="mt-7 flex flex-col items-center gap-4 rounded-2xl border border-accent/30 bg-accent/5 p-8 text-center"
     >
       <AnimatedCheck />
-      <div className="space-y-1">
-        <h3 className="font-hero text-2xl font-bold text-brand-light">¡Cuenta creada!</h3>
-        <p className="text-sm text-brand-light/70">Te llevamos al login en unos segundos…</p>
+      <div>
+        <h3 className="text-xl font-semibold text-text-primary">¡Cuenta creada!</h3>
+        <p className="mt-1 text-sm text-text-secondary">
+          Te llevamos al login en unos segundos…
+        </p>
       </div>
     </motion.div>
   );
@@ -409,30 +421,48 @@ function SuccessCard() {
 
 function AnimatedCheck() {
   return (
-    <svg width="64" height="64" viewBox="0 0 64 64" fill="none" aria-hidden>
+    <svg width="56" height="56" viewBox="0 0 64 64" fill="none" aria-hidden>
       <motion.circle
         cx="32"
         cy="32"
         r="28"
-        stroke="#0AFFE0"
+        stroke="#0071E3"
         strokeWidth="3"
         initial={{ pathLength: 0, opacity: 0 }}
         animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 0.7, ease: 'easeOut' }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
       />
       <motion.path
         d="M20 33 L29 42 L45 24"
-        stroke="#0AFFE0"
+        stroke="#0071E3"
         strokeWidth="3.5"
         strokeLinecap="round"
         strokeLinejoin="round"
         initial={{ pathLength: 0 }}
         animate={{ pathLength: 1 }}
-        transition={{ duration: 0.5, delay: 0.45, ease: 'easeOut' }}
-        style={{
-          filter: 'drop-shadow(0 0 6px rgba(10,255,224,0.65))',
-        }}
+        transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
       />
+    </svg>
+  );
+}
+
+function SteeringIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="2.4" />
+      <path d="M12 5v4.6" />
+      <path d="M5.6 14.5l4 -2.1" />
+      <path d="M18.4 14.5l-4 -2.1" />
     </svg>
   );
 }

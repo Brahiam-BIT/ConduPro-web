@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'ConduPro',
         short_name: 'ConduPro',
         description: 'Plataforma de gestión para escuelas de conducción',
-        theme_color: '#7C3AED',
-        background_color: '#FAFAF9',
+        theme_color: '#0071E3',
+        background_color: '#FFFFFF',
         display: 'standalone',
         start_url: '/',
         icons: [

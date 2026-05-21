@@ -15,12 +15,9 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const VARIANT_MAP: Record<CardVariant, string> = {
-  default:
-    'bg-surface-50 border border-surface-200 dark:bg-surface-900 dark:border-surface-800',
-  elevated:
-    'bg-surface-50 border border-surface-200/70 shadow-md dark:bg-surface-900 dark:border-surface-800',
-  glass:
-    'bg-surface-50/70 backdrop-blur-md border border-surface-200/60 shadow-sm dark:bg-surface-900/60 dark:border-surface-800/60',
+  default: 'bg-white border border-border',
+  elevated: 'bg-white border border-border shadow-sm',
+  glass: 'bg-white/80 backdrop-blur-md border border-border shadow-sm',
 };
 
 const PADDING_MAP = {
@@ -56,17 +53,17 @@ export function CardHeader({ className, children }: { className?: string; childr
 
 export function CardTitle({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <h3 className={cn('text-heading-sm text-surface-800 dark:text-surface-100', className)}>{children}</h3>
+    <h3 className={cn('text-heading-sm text-text-primary', className)}>{children}</h3>
   );
 }
 
 export function CardDescription({ className, children }: { className?: string; children: ReactNode }) {
-  return <p className={cn('text-body-sm text-surface-600 dark:text-surface-400', className)}>{children}</p>;
+  return <p className={cn('text-body-sm text-text-secondary', className)}>{children}</p>;
 }
 
 export function CardFooter({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn('mt-4 flex items-center justify-end gap-2 border-t border-surface-200 pt-4 dark:border-surface-800', className)}>
+    <div className={cn('mt-4 flex items-center justify-end gap-2 border-t border-border pt-4', className)}>
       {children}
     </div>
   );

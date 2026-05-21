@@ -73,10 +73,10 @@ export function AppShell() {
   const userFullName = user ? `${user.firstName} ${user.lastName}` : 'Usuario';
 
   return (
-    <div className="min-h-screen bg-surface-100 dark:bg-surface-950">
+    <div className="min-h-screen bg-bg-secondary">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-primary-600 focus:px-4 focus:py-2 focus:text-body-sm focus:font-semibold focus:text-white focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[70] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-body-sm focus:font-semibold focus:text-white focus:shadow-lg"
       >
         Saltar al contenido principal
       </a>
@@ -152,7 +152,7 @@ function Sidebar({
   return (
     <aside
       className={cn(
-        'flex h-screen flex-col border-r border-surface-200 bg-surface-50 dark:border-surface-800 dark:bg-surface-900',
+        'flex h-screen flex-col border-r border-border bg-bg-primary',
         mobile
           ? 'w-72'
           : cn(
@@ -163,7 +163,7 @@ function Sidebar({
     >
       <div
         className={cn(
-          'flex h-16 items-center border-b border-surface-200 px-4 dark:border-surface-800',
+          'flex h-16 items-center border-b border-border px-4',
           collapsed ? 'justify-center' : 'justify-between',
         )}
       >
@@ -174,7 +174,7 @@ function Sidebar({
             onClick={onCollapseToggle}
             aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
             className={cn(
-              'inline-flex h-8 w-8 items-center justify-center rounded-md text-surface-500 hover:bg-surface-200 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200',
+              'inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
               collapsed && 'hidden',
             )}
           >
@@ -188,7 +188,7 @@ function Sidebar({
           type="button"
           onClick={onCollapseToggle}
           aria-label="Expandir menú"
-          className="mx-auto my-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-surface-500 hover:bg-surface-200 hover:text-surface-700 dark:hover:bg-surface-800 dark:hover:text-surface-200"
+          className="mx-auto my-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-bg-secondary hover:text-text-primary"
         >
           <ChevronsRight className="h-4 w-4" />
         </button>
@@ -209,8 +209,8 @@ function Sidebar({
                   className={cn(
                     'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-body-sm font-medium transition-colors duration-150',
                     active
-                      ? 'text-primary-700 dark:text-primary-200'
-                      : 'text-surface-600 hover:bg-surface-100 hover:text-surface-800 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-100',
+                      ? 'text-accent'
+                      : 'text-text-secondary hover:bg-bg-secondary hover:text-text-primary',
                     collapsed && 'justify-center px-2',
                   )}
                 >
@@ -220,19 +220,19 @@ function Sidebar({
                       <motion.span
                         layoutId={mobile ? 'sidebar-active-bg-mobile' : 'sidebar-active-bg'}
                         aria-hidden
-                        className="absolute inset-0 -z-10 rounded-lg bg-primary-50 dark:bg-primary-500/15"
-                        transition={{ type: 'spring', bounce: 0.18, duration: 0.45 }}
+                        className="absolute inset-0 -z-10 rounded-lg bg-accent/10"
+                        transition={{ type: 'spring', bounce: 0.18, duration: 0.4 }}
                       />
                       {/* Barrita lateral izquierda */}
                       <motion.span
                         layoutId={mobile ? 'sidebar-active-bar-mobile' : 'sidebar-active-bar'}
                         aria-hidden
-                        className="absolute inset-y-1 left-0 w-1 rounded-r-full bg-primary-600"
-                        transition={{ type: 'spring', bounce: 0.18, duration: 0.45 }}
+                        className="absolute inset-y-1 left-0 w-0.5 rounded-r-full bg-accent"
+                        transition={{ type: 'spring', bounce: 0.18, duration: 0.4 }}
                       />
                     </>
                   ) : null}
-                  <Icon className={cn('h-4 w-4 shrink-0', active && 'text-primary-600 dark:text-primary-300')} />
+                  <Icon className={cn('h-4 w-4 shrink-0', active && 'text-accent')} />
                   {!collapsed ? <span className="truncate">{item.label}</span> : null}
                 </NavLink>
               </li>
@@ -241,34 +241,34 @@ function Sidebar({
         </ul>
       </nav>
 
-      <div className="border-t border-surface-200 p-3 dark:border-surface-800">
+      <div className="border-t border-border p-3">
         <div
           className={cn(
             'flex items-center gap-3 rounded-lg p-2',
-            collapsed ? 'flex-col justify-center' : 'bg-surface-100/60 dark:bg-surface-800/60',
+            collapsed ? 'flex-col justify-center' : 'bg-bg-secondary',
           )}
         >
           <Avatar name={userName} size="sm" />
           {!collapsed ? (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-body-sm font-semibold text-surface-800 dark:text-surface-100">
+              <p className="truncate text-body-sm font-semibold text-text-primary">
                 {userName}
               </p>
-              <p className="truncate text-caption text-surface-500 dark:text-surface-400">{userEmail}</p>
+              <p className="truncate text-caption text-text-secondary">{userEmail}</p>
             </div>
           ) : null}
           <button
             type="button"
             onClick={onLogout}
             aria-label="Cerrar sesión"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-surface-500 transition-colors hover:bg-error-50 hover:text-error-600 dark:hover:bg-error-500/20 dark:hover:text-error-500"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-error-50 hover:text-error-600"
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
         {!collapsed ? (
           <div className="mt-3 flex items-center justify-between px-2">
-            <span className="text-caption text-surface-500 dark:text-surface-400">Tema</span>
+            <span className="text-caption text-text-secondary">Tema</span>
             <ThemeToggle />
           </div>
         ) : null}
@@ -296,7 +296,7 @@ function MobileDrawer({ open, onClose, children }: { open: boolean; onClose: () 
   return (
     <div className="fixed inset-0 z-50 flex lg:hidden">
       <div
-        className="absolute inset-0 bg-surface-950/40 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-text-primary/30 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
         aria-hidden
       />
@@ -315,7 +315,7 @@ function MobileDrawer({ open, onClose, children }: { open: boolean; onClose: () 
           type="button"
           onClick={onClose}
           aria-label="Cerrar menú"
-          className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-md text-surface-500 hover:bg-surface-200 dark:hover:bg-surface-800"
+          className="absolute right-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:bg-bg-secondary"
         >
           <X className="h-5 w-5" />
         </button>
@@ -336,8 +336,8 @@ function RouteFade({ routeKey, children }: { routeKey: string; children: ReactNo
   return (
     <motion.div
       key={routeKey}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
     >
       {children}
     </motion.div>
@@ -346,13 +346,13 @@ function RouteFade({ routeKey, children }: { routeKey: string; children: ReactNo
 
 function MobileNavbar({ onOpenMenu, userName }: { onOpenMenu: () => void; userName: string }) {
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-surface-200 bg-surface-50/80 px-4 backdrop-blur-md dark:border-surface-800 dark:bg-surface-900/80 lg:hidden">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-white/80 px-4 backdrop-blur-md lg:hidden">
       <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onOpenMenu}
           aria-label="Abrir menú"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-surface-600 hover:bg-surface-200 dark:text-surface-300 dark:hover:bg-surface-800"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-text-secondary hover:bg-bg-secondary"
         >
           <Menu className="h-5 w-5" />
         </button>

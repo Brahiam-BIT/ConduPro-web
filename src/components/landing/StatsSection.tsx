@@ -4,13 +4,9 @@ import gsap from 'gsap';
 import { useReducedMotion } from 'framer-motion';
 
 interface Stat {
-  /** Valor objetivo numérico (sin sufijo/prefijo). */
   target: number;
-  /** Prefijo opcional (ej. "<", "$"). */
   prefix?: string;
-  /** Sufijo opcional (ej. "+", "%", "ms"). */
   suffix?: string;
-  /** Decimales a mostrar mientras anima. */
   decimals?: number;
   label: string;
 }
@@ -30,17 +26,12 @@ function formatNumber(value: number, decimals = 0) {
   });
 }
 
-/**
- * StatsSection — 4 números grandes con count-up cuando entran al viewport.
- *
- * Usa GSAP para animar un objeto `{ value }` y `useState` para reflejar
- * el valor en pantalla con `Intl.NumberFormat`.
- */
+/** StatsSection — 4 números grandes con count-up. Sin colores, sólo tipografía. */
 export function StatsSection() {
   return (
     <section
       id="stats"
-      className="relative border-y border-brand-mid/30 bg-brand-dark py-20 sm:py-28"
+      className="border-y border-border bg-bg-primary py-20 sm:py-28"
     >
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-12 px-6 sm:px-10 lg:grid-cols-4">
         {STATS.map((s) => (
@@ -68,8 +59,8 @@ function StatItem({ stat }: { stat: Stat }) {
     const obj = { v: 0 };
     const tween = gsap.to(obj, {
       v: stat.target,
-      duration: 1.8,
-      ease: 'cubic-bezier(0.16, 1, 0.3, 1)',
+      duration: 1.4,
+      ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
       onUpdate: () => setValue(obj.v),
       onComplete: () => setValue(stat.target),
     });
@@ -80,14 +71,12 @@ function StatItem({ stat }: { stat: Stat }) {
 
   return (
     <div ref={ref} className="text-center">
-      <p className="font-hero text-5xl font-bold tracking-tight text-brand-light sm:text-6xl md:text-7xl">
+      <p className="text-5xl font-semibold tracking-tight text-text-primary sm:text-6xl md:text-7xl">
         {stat.prefix ?? ''}
-        <span className="text-gradient-dynamic">{formatNumber(value, stat.decimals ?? 0)}</span>
+        {formatNumber(value, stat.decimals ?? 0)}
         {stat.suffix ?? ''}
       </p>
-      <p className="mt-3 font-mono-brand text-[11px] uppercase tracking-[0.3em] text-brand-light/55">
-        {stat.label}
-      </p>
+      <p className="mt-3 text-sm font-medium text-text-secondary">{stat.label}</p>
     </div>
   );
 }

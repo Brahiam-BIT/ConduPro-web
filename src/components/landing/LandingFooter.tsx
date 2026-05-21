@@ -32,33 +32,15 @@ const COLUMNS = [
   },
 ] as const;
 
-/**
- * LandingFooter — cierre con 4 columnas (logo + descripción, producto,
- * empresa, legal) y una línea de gradiente animada en el borde superior.
- */
+/** LandingFooter — 4 columnas minimalistas sobre gris claro. */
 export function LandingFooter() {
   return (
-    <footer className="relative bg-brand-dark pb-12 pt-20">
-      {/* Línea de gradiente animada */}
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-px overflow-hidden"
-      >
-        <div
-          className="h-full animate-gradient-shift"
-          style={{
-            background:
-              'linear-gradient(90deg, #0AFFE0 0%, #7000FF 25%, #0AFFE0 50%, #7000FF 75%, #0AFFE0 100%)',
-            backgroundSize: '200% 100%',
-          }}
-        />
-      </div>
-
+    <footer className="border-t border-border bg-bg-secondary pb-10 pt-16">
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="grid grid-cols-2 gap-10 lg:grid-cols-4">
           <div className="col-span-2 max-w-xs lg:col-span-1">
             <BrandMark />
-            <p className="mt-5 text-sm leading-relaxed text-brand-light/60">
+            <p className="mt-5 text-sm leading-relaxed text-text-secondary">
               La plataforma todo-en-uno para escuelas de conducción modernas.
               Diseñada en Colombia, lista para el mundo.
             </p>
@@ -66,15 +48,13 @@ export function LandingFooter() {
 
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <p className="font-mono-brand text-[10px] uppercase tracking-[0.3em] text-brand-light/50">
-                {col.title}
-              </p>
+              <p className="text-sm font-semibold text-text-primary">{col.title}</p>
               <ul className="mt-4 space-y-3">
                 {col.links.map((l) => (
                   <li key={l.label}>
                     <a
                       href={l.href}
-                      className="text-sm text-brand-light/80 transition-colors hover:text-brand-primary"
+                      className="text-sm text-text-secondary transition-colors duration-150 hover:text-text-primary"
                     >
                       {l.label}
                     </a>
@@ -85,21 +65,21 @@ export function LandingFooter() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-brand-mid/40 pt-6 sm:flex-row sm:items-center">
-          <p className="font-mono-brand text-[11px] uppercase tracking-[0.3em] text-brand-light/50">
+        <div className="mt-12 flex flex-col items-start justify-between gap-3 border-t border-border pt-6 sm:flex-row sm:items-center">
+          <p className="text-xs text-text-tertiary">
             © {new Date().getFullYear()} ConduPro · Built in Colombia
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 text-xs">
             <Link
               to={ROUTES.LOGIN}
-              className="text-xs text-brand-light/70 transition-colors hover:text-brand-light"
+              className="text-text-secondary transition-colors duration-150 hover:text-text-primary"
             >
               Iniciar sesión
             </Link>
-            <span className="text-brand-light/30">·</span>
+            <span className="text-text-tertiary">·</span>
             <Link
               to={ROUTES.REGISTER}
-              className="text-xs text-brand-primary transition-colors hover:text-brand-light"
+              className="font-medium text-accent transition-colors duration-150 hover:text-accent-hover"
             >
               Crear cuenta
             </Link>

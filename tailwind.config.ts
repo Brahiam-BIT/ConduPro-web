@@ -2,13 +2,17 @@ import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
 
 /**
- * ConduPro design system
- * - Primary: violet eléctrico — moderno, premium, distinto del azul corporativo.
- * - Accent:  amber cálido — para CTAs secundarios y badges destacados.
- * - Surface: off-white cálido en light y near-black con tinte violeta en dark.
- * - Tipografía: Plus Jakarta Sans (Google Fonts), geométrica y muy legible en UI.
- * - Radios:  sm 4 / md 8 / lg 16 / xl 24 / full.
- * - Sombras: tintadas con el primario, no negras genéricas.
+ * ConduPro design system — Apple-minimal redesign.
+ *
+ * Principles:
+ *  - Light, spacious, single accent (#0071E3 — Apple blue).
+ *  - Typography is the primary visual element (Inter).
+ *  - Subtle neutral shadows; no neon/violet/cyan glows.
+ *  - Dashboard color *scales* are kept (primary/accent/surface/success/warning/error/info)
+ *    but recolored to the Apple-blue / system palette so legacy classes don't break.
+ *  - New *semantic* tokens (`bg.*`, `text.*`, `border`, `accent`, `surface`, `hero.*`)
+ *    are exposed so new components can use `bg-bg-primary`, `text-text-secondary`, etc.
+ *  - Legacy `brand.*` / `font-hero` aliases redirect to the new neutral palette.
  */
 const config: Config = {
   darkMode: 'class',
@@ -16,96 +20,135 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Visual update — paleta dynamic/sport (landing, login, register)
-        brand: {
-          primary: '#0AFFE0',
-          secondary: '#7000FF',
-          dark: '#04020F',
-          surface: '#0D0A1E',
-          mid: '#1A1535',
-          light: '#F0EEFF',
+        // ─── New Apple semantic tokens ─────────────────────────────
+        bg: {
+          primary: '#FFFFFF',
+          secondary: '#F5F5F7',
+          tertiary: '#E8E8ED',
         },
-        primary: {
-          50: '#F5F3FF',
-          100: '#EDE9FE',
-          200: '#DDD6FE',
-          300: '#C4B5FD',
-          400: '#A78BFA',
-          500: '#8B5CF6',
-          600: '#7C3AED',
-          700: '#6D28D9',
-          800: '#5B21B6',
-          900: '#4C1D95',
-          950: '#2E1065',
+        text: {
+          primary: '#1D1D1F',
+          secondary: '#6E6E73',
+          tertiary: '#AEAEB2',
         },
+        border: {
+          DEFAULT: '#D2D2D7',
+        },
+        hero: {
+          bg: '#000000',
+          surface: '#1C1C1E',
+        },
+
+        // ─── Accent ────────────────────────────────────────────────
+        // `bg-accent` / `text-accent` use DEFAULT (Apple blue).
+        // `bg-accent-hover` is provided. `bg-accent-50..900` provide a soft
+        // tonal scale for hover states, badges, etc.
         accent: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          200: '#FDE68A',
-          300: '#FCD34D',
-          400: '#FBBF24',
-          500: '#F59E0B',
-          600: '#D97706',
-          700: '#B45309',
-          800: '#92400E',
-          900: '#78350F',
+          DEFAULT: '#0071E3',
+          hover: '#0077ED',
+          50: '#EAF4FE',
+          100: '#D0E4FC',
+          200: '#A8CCF8',
+          300: '#75B0F2',
+          400: '#3F92EB',
+          500: '#0071E3',
+          600: '#005EBE',
+          700: '#004C99',
+          800: '#003975',
+          900: '#002651',
         },
+
+        // ─── Surface ───────────────────────────────────────────────
+        // DEFAULT is the new card surface (#FBFBFD). Scales reassigned to a
+        // neutral Apple-gray ladder for legacy `bg-surface-*` callers.
         surface: {
-          DEFAULT: '#FAFAF9',
+          DEFAULT: '#FBFBFD',
           50: '#FFFFFF',
-          100: '#FAFAF9',
-          200: '#F4F4F2',
-          300: '#E7E5E4',
-          400: '#D6D3D1',
-          500: '#A8A29E',
-          600: '#78716C',
-          700: '#44403C',
-          800: '#1C1B1F',
-          900: '#13121A',
-          950: '#0B0A14',
+          100: '#FBFBFD',
+          200: '#F5F5F7',
+          300: '#E8E8ED',
+          400: '#D2D2D7',
+          500: '#AEAEB2',
+          600: '#6E6E73',
+          700: '#48484A',
+          800: '#1D1D1F',
+          900: '#000000',
+          950: '#000000',
         },
+
+        // ─── Legacy `primary` scale → re-mapped to Apple blue ──────
+        // Kept so existing dashboard utilities (`bg-primary-50` …) keep
+        // working with the new look.
+        primary: {
+          50: '#EAF4FE',
+          100: '#D0E4FC',
+          200: '#A8CCF8',
+          300: '#75B0F2',
+          400: '#3F92EB',
+          500: '#0071E3',
+          600: '#005EBE',
+          700: '#004C99',
+          800: '#003975',
+          900: '#002651',
+          950: '#001530',
+        },
+
+        // ─── Apple system colors ───────────────────────────────────
         success: {
-          50: '#ECFDF5',
-          100: '#D1FAE5',
-          500: '#10B981',
-          600: '#059669',
-          700: '#047857',
+          50: '#E8F8EE',
+          100: '#D1F1DD',
+          500: '#34C759',
+          600: '#2BA84B',
+          700: '#21873C',
         },
         warning: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          500: '#F59E0B',
-          600: '#D97706',
-          700: '#B45309',
+          50: '#FFF7E5',
+          100: '#FFEDC2',
+          500: '#FF9500',
+          600: '#D67E00',
+          700: '#A86200',
         },
         error: {
-          50: '#FFF1F2',
-          100: '#FFE4E6',
-          500: '#F43F5E',
-          600: '#E11D48',
-          700: '#BE123C',
+          50: '#FFE9E7',
+          100: '#FFCFCB',
+          500: '#FF3B30',
+          600: '#D7332A',
+          700: '#A82822',
         },
         info: {
-          50: '#F0F9FF',
-          100: '#E0F2FE',
-          500: '#0EA5E9',
-          600: '#0284C7',
-          700: '#0369A1',
+          50: '#EAF4FE',
+          100: '#D0E4FC',
+          500: '#0071E3',
+          600: '#005EBE',
+          700: '#004C99',
+        },
+
+        // ─── Legacy `brand.*` (used by remaining auth/landing helpers)
+        // Mapped onto the new neutral palette so old class names degrade
+        // gracefully while we finish the migration.
+        brand: {
+          primary: '#0071E3',
+          secondary: '#0077ED',
+          dark: '#1D1D1F',
+          surface: '#FBFBFD',
+          mid: '#D2D2D7',
+          light: '#FFFFFF',
         },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
-        display: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
-        // Visual update — tipografías para landing/auth (no rompe el dashboard)
+        // Inter is now the single UI typeface (Apple SF stand-in).
+        sans: ['Inter', ...defaultTheme.fontFamily.sans],
+        display: ['Inter', ...defaultTheme.fontFamily.sans],
         body: ['Inter', ...defaultTheme.fontFamily.sans],
-        hero: ['Syne', ...defaultTheme.fontFamily.sans],
+        // Aliases kept for legacy classes — both point to Inter.
+        hero: ['Inter', ...defaultTheme.fontFamily.sans],
         mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
       },
       fontSize: {
-        'display-2xl': ['4.5rem', { lineHeight: '1.05', letterSpacing: '-0.04em', fontWeight: '700' }],
-        'display-xl': ['3.75rem', { lineHeight: '1.08', letterSpacing: '-0.03em', fontWeight: '700' }],
-        'display-lg': ['3rem', { lineHeight: '1.12', letterSpacing: '-0.025em', fontWeight: '700' }],
-        'display-md': ['2.25rem', { lineHeight: '1.18', letterSpacing: '-0.02em', fontWeight: '700' }],
+        'display-2xl': ['4.5rem', { lineHeight: '1.05', letterSpacing: '-0.04em', fontWeight: '600' }],
+        'display-xl': ['3.75rem', { lineHeight: '1.08', letterSpacing: '-0.03em', fontWeight: '600' }],
+        'display-lg': ['3rem', { lineHeight: '1.12', letterSpacing: '-0.025em', fontWeight: '600' }],
+        'display-md': ['2.25rem', { lineHeight: '1.18', letterSpacing: '-0.02em', fontWeight: '600' }],
         'display-sm': ['1.875rem', { lineHeight: '1.22', letterSpacing: '-0.015em', fontWeight: '600' }],
         'heading-lg': ['1.5rem', { lineHeight: '1.3', fontWeight: '600' }],
         'heading-md': ['1.25rem', { lineHeight: '1.35', fontWeight: '600' }],
@@ -121,29 +164,30 @@ const config: Config = {
         sm: '4px',
         DEFAULT: '8px',
         md: '8px',
-        lg: '16px',
-        xl: '24px',
-        '2xl': '32px',
+        lg: '12px',
+        xl: '14px',
+        '2xl': '16px',
+        '3xl': '20px',
         full: '9999px',
       },
       boxShadow: {
-        xs: '0 1px 2px 0 rgba(124, 58, 237, 0.06)',
-        sm: '0 2px 6px -1px rgba(124, 58, 237, 0.08), 0 1px 2px -1px rgba(124, 58, 237, 0.04)',
-        md: '0 6px 16px -4px rgba(124, 58, 237, 0.12), 0 2px 6px -2px rgba(124, 58, 237, 0.06)',
-        lg: '0 12px 28px -8px rgba(124, 58, 237, 0.18), 0 4px 10px -4px rgba(124, 58, 237, 0.08)',
-        xl: '0 24px 48px -12px rgba(124, 58, 237, 0.22)',
-        glow: '0 0 0 4px rgba(124, 58, 237, 0.18)',
-        'glow-error': '0 0 0 4px rgba(244, 63, 94, 0.18)',
-        'glow-success': '0 0 0 4px rgba(16, 185, 129, 0.18)',
-        'inner-soft': 'inset 0 1px 2px 0 rgba(124, 58, 237, 0.08)',
+        xs: '0 1px 2px 0 rgba(0, 0, 0, 0.04)',
+        sm: '0 1px 2px 0 rgba(0, 0, 0, 0.06), 0 1px 3px 0 rgba(0, 0, 0, 0.04)',
+        DEFAULT: '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
+        md: '0 4px 12px -2px rgba(0, 0, 0, 0.08)',
+        lg: '0 12px 24px -8px rgba(0, 0, 0, 0.10)',
+        xl: '0 24px 48px -12px rgba(0, 0, 0, 0.12)',
+        glow: '0 0 0 4px rgba(0, 113, 227, 0.18)',
+        'glow-error': '0 0 0 4px rgba(255, 59, 48, 0.18)',
+        'glow-success': '0 0 0 4px rgba(52, 199, 89, 0.18)',
+        'inner-soft': 'inset 0 1px 2px 0 rgba(0, 0, 0, 0.04)',
       },
       ringColor: {
-        DEFAULT: '#7C3AED',
+        DEFAULT: '#0071E3',
       },
       transitionTimingFunction: {
         smooth: 'cubic-bezier(0.22, 1, 0.36, 1)',
         snappy: 'cubic-bezier(0.5, 0, 0.1, 1)',
-        // Visual update — easing oficial del estilo dinámico
         brand: 'cubic-bezier(0.16, 1, 0.3, 1)',
       },
       transitionDuration: {
@@ -185,23 +229,6 @@ const config: Config = {
         'spin-slow': {
           to: { transform: 'rotate(360deg)' },
         },
-        // Visual update — keyframes para landing/auth
-        float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-8px)' },
-        },
-        marquee: {
-          from: { transform: 'translateX(0)' },
-          to: { transform: 'translateX(-50%)' },
-        },
-        'bounce-soft': {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(6px)' },
-        },
-        'gradient-shift': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-        },
       },
       animation: {
         'fade-in': 'fade-in 200ms cubic-bezier(0.22, 1, 0.36, 1)',
@@ -212,25 +239,11 @@ const config: Config = {
         'sheet-up': 'sheet-up 250ms cubic-bezier(0.22, 1, 0.36, 1)',
         shimmer: 'shimmer 1.8s linear infinite',
         'spin-slow': 'spin-slow 1.2s linear infinite',
-        // Visual update — animaciones del estilo dinámico
-        float: 'float 4s cubic-bezier(0.16, 1, 0.3, 1) infinite',
-        'float-slow': 'float 7s cubic-bezier(0.16, 1, 0.3, 1) infinite',
-        marquee: 'marquee 28s linear infinite',
-        'bounce-soft': 'bounce-soft 1.6s cubic-bezier(0.16, 1, 0.3, 1) infinite',
-        'gradient-shift': 'gradient-shift 6s ease infinite',
       },
       backgroundImage: {
-        'gradient-brand': 'linear-gradient(135deg, #7C3AED 0%, #A78BFA 50%, #F59E0B 100%)',
-        'gradient-brand-soft': 'linear-gradient(135deg, rgba(124,58,237,0.18) 0%, rgba(245,158,11,0.12) 100%)',
-        'gradient-dark': 'linear-gradient(135deg, #2E1065 0%, #0B0A14 100%)',
-        shimmer:
-          'linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.08) 50%, transparent 100%)',
-        // Visual update — gradiente oficial cyan→violeta
-        'gradient-dynamic': 'linear-gradient(135deg, #0AFFE0 0%, #7000FF 100%)',
-        'gradient-dynamic-soft':
-          'linear-gradient(135deg, rgba(10,255,224,0.18) 0%, rgba(112,0,255,0.18) 100%)',
-        'gradient-dynamic-radial':
-          'radial-gradient(circle at 30% 30%, rgba(10,255,224,0.25) 0%, rgba(112,0,255,0.2) 35%, rgba(4,2,15,0) 70%)',
+        // Subtle radial used by the register page background.
+        'register-radial':
+          'radial-gradient(ellipse at 60% 0%, #E8F0FE 0%, #F5F5F7 40%, #FFFFFF 100%)',
       },
     },
   },

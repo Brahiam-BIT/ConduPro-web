@@ -1,9 +1,8 @@
 /**
- * LogosMarquee — banda de "marcas asociadas" en loop infinito.
+ * LogosMarquee — banda minimalista de "marcas asociadas" en loop.
  *
- * Implementación CSS: dos copias del listado fluyendo a la izquierda con
- * `animation: marquee` (definida en `tailwind.config.ts`). El gradient mask
- * funde los bordes para que sea armónico con el resto.
+ * Implementación CSS pura: dos copias del listado fluyendo a la izquierda
+ * con `@keyframes` inline. Mask en los bordes para fundir con el fondo.
  */
 const SCHOOLS = [
   'AutoAcademia Bogotá',
@@ -21,9 +20,9 @@ export function LogosMarquee() {
   return (
     <section
       aria-label="Escuelas que confían en ConduPro"
-      className="relative overflow-hidden border-y border-brand-mid/30 bg-brand-dark py-10"
+      className="overflow-hidden border-y border-border bg-bg-secondary py-12"
     >
-      <p className="mb-6 text-center font-mono-brand text-[11px] uppercase tracking-[0.35em] text-brand-light/55">
+      <p className="mb-8 text-center text-sm font-medium text-text-tertiary">
         Confían en ConduPro
       </p>
 
@@ -36,18 +35,30 @@ export function LogosMarquee() {
             'linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%)',
         }}
       >
-        <div className="flex w-max animate-marquee gap-14 will-change-transform">
+        <div className="logos-marquee flex w-max gap-12 will-change-transform">
           {[...SCHOOLS, ...SCHOOLS].map((name, i) => (
             <span
               key={i}
-              className="flex shrink-0 items-center gap-3 font-hero text-2xl font-semibold tracking-tight text-brand-light/55"
+              className="shrink-0 text-xl font-semibold tracking-tight text-text-tertiary"
             >
-              <span className="size-2 rounded-full bg-gradient-dynamic" />
               {name}
             </span>
           ))}
         </div>
       </div>
+
+      <style>{`
+        .logos-marquee {
+          animation: marquee-scroll 32s linear infinite;
+        }
+        @keyframes marquee-scroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .logos-marquee { animation: none; }
+        }
+      `}</style>
     </section>
   );
 }

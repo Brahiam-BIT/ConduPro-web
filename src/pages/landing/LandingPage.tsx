@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SmoothScrollProvider } from '@/providers/SmoothScrollProvider';
 import { useAuth } from '@/hooks/useAuth';
 import { LandingNav } from '@/components/landing/LandingNav';
 import { HeroSection } from '@/components/landing/HeroSection';
@@ -15,14 +14,13 @@ import { ROLE_DEFAULT_ROUTE } from '@/constants/routes';
 import type { Role } from '@/constants/roles';
 
 /**
- * LandingPage — página pública principal en `/`.
+ * LandingPage — página pública en `/`.
  *
- * Orquesta todas las secciones de marketing y monta `SmoothScrollProvider`
- * (Lenis) para el scroll suave. La página entera vive bajo `theme-dynamic`
- * (paleta cyan/violeta sobre fondo `#04020F`).
+ * Apple-minimal: blanco, gris y un único acento azul. El hero es la única
+ * sección con 3D / scroll-driven motion; el resto es tipografía y micro-animaciones
+ * Framer Motion sobre fondo blanco/gris.
  *
- * Si el usuario ya está autenticado, se redirige al dashboard que corresponde
- * a su rol.
+ * Si el usuario está autenticado, redirige a su dashboard por rol.
  */
 export default function LandingPage() {
   const { user } = useAuth();
@@ -36,20 +34,18 @@ export default function LandingPage() {
   }, [user, navigate]);
 
   return (
-    <SmoothScrollProvider>
-      <div className="theme-dynamic min-h-screen bg-brand-dark text-brand-light">
-        <LandingNav />
-        <main>
-          <HeroSection />
-          <LogosMarquee />
-          <FeaturesSection />
-          <ShowcaseSection />
-          <RolesSection />
-          <StatsSection />
-          <CtaFinalSection />
-        </main>
-        <LandingFooter />
-      </div>
-    </SmoothScrollProvider>
+    <div className="min-h-screen bg-bg-primary text-text-primary">
+      <LandingNav />
+      <main>
+        <HeroSection />
+        <LogosMarquee />
+        <FeaturesSection />
+        <ShowcaseSection />
+        <RolesSection />
+        <StatsSection />
+        <CtaFinalSection />
+      </main>
+      <LandingFooter />
+    </div>
   );
 }

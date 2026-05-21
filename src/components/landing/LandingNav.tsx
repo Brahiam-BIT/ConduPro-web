@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
-import { useSmoothScroll } from '@/providers/SmoothScrollProvider';
 import { ROUTES } from '@/constants/routes';
 
 const NAV_LINKS = [
@@ -11,27 +10,22 @@ const NAV_LINKS = [
   { href: '#pricing', label: 'Precios' },
 ] as const;
 
-/**
- * Logo "Condu**Pro**" con ícono SVG de volante.
- * Reutilizable en navbar y footer.
- */
-export function BrandMark({ size = 28, withText = true }: { size?: number; withText?: boolean }) {
+/** Logo "ConduPro" minimalista — ícono volante en azul accent + wordmark. */
+export function BrandMark({ size = 24, withText = true }: { size?: number; withText?: boolean }) {
   return (
     <Link
       to="/"
-      className="group inline-flex items-center gap-2.5 text-brand-light no-underline"
+      className="inline-flex items-center gap-2.5 text-text-primary no-underline"
       aria-label="ConduPro"
     >
       <span
-        className="grid place-items-center rounded-xl bg-gradient-dynamic transition-transform duration-300 ease-brand group-hover:rotate-[15deg]"
+        className="grid place-items-center rounded-xl bg-accent text-white"
         style={{ width: size + 12, height: size + 12 }}
       >
-        <SteeringIcon className="text-brand-dark" style={{ width: size * 0.6, height: size * 0.6 }} />
+        <SteeringIcon style={{ width: size * 0.65, height: size * 0.65 }} />
       </span>
       {withText ? (
-        <span className="font-hero text-xl font-bold tracking-tight">
-          Condu<span className="text-gradient-dynamic">Pro</span>
-        </span>
+        <span className="text-lg font-semibold tracking-tight">ConduPro</span>
       ) : null}
     </Link>
   );
@@ -58,34 +52,27 @@ function SteeringIcon(props: React.SVGProps<SVGSVGElement>) {
 }
 
 /**
- * LandingNav — navbar fija en top.
+ * LandingNav — top bar minimalista (estilo Apple).
  *
- * - Transparente al cargar.
- * - Cambia a glassmorphism (`backdrop-blur` + fondo oscuro semi-translúcido)
- *   cuando `scrollY > 50`.
- * - Anchor links se desplazan suavemente con Lenis (via `useSmoothScroll`).
- * - Mobile: botón hamburger abre un drawer fullscreen animado con
- *   Framer Motion.
+ * - Fondo `white/80` + `backdrop-blur` siempre (el hero es negro y el contraste
+ *   funciona; las secciones posteriores son blancas y la barra se funde).
+ * - Borde inferior sutil; sin gradientes, sin glow.
+ * - Mobile: drawer fullscreen blanco con Framer Motion.
  */
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-  const { scrollTo } = useSmoothScroll();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 50);
+    const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Bloquear el scroll cuando el drawer mobile está abierto.
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
+    if (open) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
     return () => {
       document.body.style.overflow = '';
     };
@@ -94,7 +81,11 @@ export function LandingNav() {
   const handleAnchor = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     if (!href.startsWith('#')) return;
     e.preventDefault();
-    scrollTo(href, { offset: -80 });
+    const el = document.querySelector(href);
+    if (el) {
+      const top = el.getBoundingClientRect().top + window.scrollY - 64;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
     setOpen(false);
   };
 
@@ -102,10 +93,10 @@ export function LandingNav() {
     <>
       <header
         className={[
-          'fixed inset-x-0 top-0 z-50 transition-all duration-300 ease-brand',
+          'fixed inset-x-0 top-0 z-50 transition-colors duration-200',
           scrolled
-            ? 'border-b border-brand-mid/40 bg-brand-dark/65 backdrop-blur-xl'
-            : 'border-b border-transparent bg-transparent backdrop-blur-0',
+            ? 'border-b border-border bg-white/80 backdrop-blur-md'
+            : 'border-b border-transparent bg-white/60 backdrop-blur-md',
         ].join(' ')}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12">
@@ -117,33 +108,32 @@ export function LandingNav() {
                 key={l.href}
                 href={l.href}
                 onClick={(e) => handleAnchor(e, l.href)}
-                className="group relative text-sm font-medium text-brand-light/75 transition-colors duration-300 ease-brand hover:text-brand-light"
+                className="text-sm font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary"
               >
                 {l.label}
-                <span className="absolute -bottom-1 left-0 h-px w-0 bg-gradient-dynamic transition-all duration-300 ease-brand group-hover:w-full" />
               </a>
             ))}
           </nav>
 
-          <div className="hidden items-center gap-3 md:flex">
+          <div className="hidden items-center gap-2 md:flex">
             <Link
               to={ROUTES.LOGIN}
-              className="rounded-full border border-brand-mid/70 bg-brand-surface/30 px-4 py-2 text-sm font-medium text-brand-light/85 transition-all duration-300 ease-brand hover:border-brand-primary/40 hover:text-brand-light"
+              className="rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary"
             >
               Iniciar sesión
             </Link>
             <Link
               to={ROUTES.REGISTER}
-              className="rounded-full bg-gradient-dynamic px-4 py-2 font-mono-brand text-xs font-semibold uppercase tracking-[0.18em] text-brand-dark transition-transform duration-300 ease-brand hover:translate-y-[-1px] hover:shadow-[0_12px_28px_-12px_rgba(10,255,224,0.55)]"
+              className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent-hover"
             >
-              Empieza gratis
+              Empezar gratis
             </Link>
           </div>
 
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-xl border border-brand-mid/60 bg-brand-surface/40 text-brand-light md:hidden"
+            className="grid size-10 place-items-center rounded-xl border border-border bg-white text-text-primary md:hidden"
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={open}
           >
@@ -157,42 +147,42 @@ export function LandingNav() {
           <motion.div
             key="mobile-drawer"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] } }}
-            exit={{ opacity: 0, transition: { duration: 0.2 } }}
-            className="fixed inset-0 z-40 flex flex-col bg-brand-dark/95 px-6 pt-24 backdrop-blur-2xl md:hidden"
+            animate={{ opacity: 1, transition: { duration: 0.2 } }}
+            exit={{ opacity: 0, transition: { duration: 0.15 } }}
+            className="fixed inset-0 z-40 flex flex-col bg-white px-6 pt-24 md:hidden"
           >
-            <nav className="flex flex-col gap-6">
+            <nav className="flex flex-col gap-5">
               {NAV_LINKS.map((l, idx) => (
                 <motion.a
                   key={l.href}
                   href={l.href}
                   onClick={(e) => handleAnchor(e, l.href)}
-                  initial={{ opacity: 0, x: 20 }}
+                  initial={{ opacity: 0, x: 12 }}
                   animate={{
                     opacity: 1,
                     x: 0,
-                    transition: { delay: 0.05 + idx * 0.05, duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+                    transition: { delay: 0.05 + idx * 0.04, duration: 0.25 },
                   }}
-                  className="font-hero text-3xl font-bold text-brand-light"
+                  className="text-2xl font-semibold text-text-primary"
                 >
                   {l.label}
                 </motion.a>
               ))}
             </nav>
-            <div className="mt-12 flex flex-col gap-3">
+            <div className="mt-10 flex flex-col gap-3">
               <Link
                 to={ROUTES.LOGIN}
                 onClick={() => setOpen(false)}
-                className="rounded-full border border-brand-mid/70 px-5 py-3 text-center font-medium text-brand-light"
+                className="rounded-full border border-border px-5 py-3 text-center text-sm font-medium text-text-primary"
               >
                 Iniciar sesión
               </Link>
               <Link
                 to={ROUTES.REGISTER}
                 onClick={() => setOpen(false)}
-                className="rounded-full bg-gradient-dynamic px-5 py-3 text-center font-mono-brand text-xs font-semibold uppercase tracking-[0.2em] text-brand-dark"
+                className="rounded-full bg-accent px-5 py-3 text-center text-sm font-medium text-white"
               >
-                Empieza gratis
+                Empezar gratis
               </Link>
             </div>
           </motion.div>
