@@ -5,6 +5,7 @@ import { KpiCard } from '@/components/admin/KpiCard';
 import { SchedulesLineChart } from '@/components/admin/SchedulesLineChart';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from '@/components/shared/StatusBadge';
 import { ScheduleDetailModal } from '@/components/shared/ScheduleDetailModal';
+import { StaggerContainer, StaggerItem } from '@/components/shared/StaggerContainer';
 import {
   useAdminDashboardKpis,
   useAdminRecentSchedules,
@@ -62,7 +63,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="flex flex-col gap-8">
+    <StaggerContainer className="flex flex-col gap-8">
       {kpisError ? (
         <Card variant="elevated">
           <p className="text-body-sm text-error-600 dark:text-error-500">
@@ -71,7 +72,7 @@ export default function AdminDashboard() {
         </Card>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StaggerItem className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
           label="Usuarios activos"
           value={kpis?.activeUsers ?? 0}
@@ -96,19 +97,21 @@ export default function AdminDashboard() {
           icon={<Car className="h-8 w-8" />}
           isLoading={kpisLoading}
         />
-      </div>
+      </StaggerItem>
 
-      {chartError ? (
-        <Card variant="elevated">
-          <p className="text-body-sm text-error-600 dark:text-error-500">
-            No pudimos cargar el gráfico de agendamientos.
-          </p>
-        </Card>
-      ) : (
-        <SchedulesLineChart data={chartData ?? []} isLoading={chartLoading} />
-      )}
+      <StaggerItem delay={0.1}>
+        {chartError ? (
+          <Card variant="elevated">
+            <p className="text-body-sm text-error-600 dark:text-error-500">
+              No pudimos cargar el gráfico de agendamientos.
+            </p>
+          </Card>
+        ) : (
+          <SchedulesLineChart data={chartData ?? []} isLoading={chartLoading} />
+        )}
+      </StaggerItem>
 
-      <section className="flex flex-col gap-4">
+      <StaggerItem as="section" className="flex flex-col gap-4" delay={0.3}>
         <h2 className="text-heading-md text-surface-900 dark:text-surface-50">
           Últimos agendamientos
         </h2>
@@ -128,7 +131,7 @@ export default function AdminDashboard() {
           onRowClick={(r) => setSelectedId(r.id)}
           caption="Últimos 10 agendamientos"
         />
-      </section>
+      </StaggerItem>
 
       <ScheduleDetailModal
         open={!!selectedId}
@@ -137,6 +140,6 @@ export default function AdminDashboard() {
         isLoading={detailLoading}
         viewer="admin"
       />
-    </div>
+    </StaggerContainer>
   );
 }

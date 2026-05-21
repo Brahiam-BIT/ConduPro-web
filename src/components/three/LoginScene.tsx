@@ -1,110 +1,34 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useRef } from 'react';
 import { Environment, MeshReflectorMaterial } from '@react-three/drei';
-import { EffectComposer, Bloom, Vignette, ChromaticAberration } from '@react-three/postprocessing';
-import { BlendFunction } from 'postprocessing';
-import * as THREE from 'three';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import BrandCanvas from './BrandCanvas';
 import CarModel, { type CarModelHandle } from './CarModel';
-import ParticlesField from './ParticlesField';
 import { useAdaptiveQuality } from '@/hooks/useAdaptiveQuality';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
-interface CameraRigProps {
-  /** Posición base de la cámara. */
-  basePosition?: [number, number, number];
-  /** Amplitud del parallax en grados. */
-  amplitudeDeg?: number;
-  /** Punto al que mira la cámara. */
-  lookAt?: [number, number, number];
-}
-
-/**
- * CameraRig — aplica parallax suave en la cámara siguiendo el mouse.
- * Pivota alrededor del `lookAt` con lerp para sentirse "cinematográfico".
- */
-function CameraRig({
-  basePosition = [4, 2.1, 6],
-  amplitudeDeg = 10,
-  lookAt = [0, 0.5, 0],
-}: CameraRigProps) {
-  const { camera, mouse } = useThree();
-  const targetPosition = useRef(new THREE.Vector3(...basePosition));
-  const lookAtVec = new THREE.Vector3(...lookAt);
-  const amp = (amplitudeDeg * Math.PI) / 180;
-
-  useEffect(() => {
-    camera.position.set(...basePosition);
-    camera.lookAt(lookAtVec);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useFrame((_state, delta) => {
-    // mouse.x / mouse.y vienen normalizados a [-1, 1].
-    const yaw = -mouse.x * amp;
-    const pitch = mouse.y * amp * 0.5;
-    const r = Math.hypot(basePosition[0] - lookAt[0], basePosition[2] - lookAt[2]);
-    const baseAngle = Math.atan2(basePosition[2] - lookAt[2], basePosition[0] - lookAt[0]);
-    const a = baseAngle + yaw * 0.6;
-
-    targetPosition.current.x = lookAt[0] + Math.cos(a) * r;
-    targetPosition.current.z = lookAt[2] + Math.sin(a) * r;
-    targetPosition.current.y = basePosition[1] + pitch;
-
-    const lerpFactor = 1 - Math.pow(0.001, delta);
-    camera.position.lerp(targetPosition.current, lerpFactor);
-    camera.lookAt(lookAtVec);
-  });
-
-  return null;
-}
-
-interface MouseFollowLightProps {
-  color?: string;
-  intensity?: number;
-  height?: number;
-  range?: number;
-}
-
-/**
- * MouseFollowLight — PointLight que sigue al mouse en el plano XZ con lerp.
- * El spec lo pide para HeroScene pero también queda muy bien en LoginScene.
- */
-function MouseFollowLight({
-  color = '#0AFFE0',
-  intensity = 18,
-  height = 1.4,
-  range = 6,
-}: MouseFollowLightProps) {
-  const lightRef = useRef<THREE.PointLight>(null);
-  const { mouse } = useThree();
-  const target = useRef(new THREE.Vector3(0, height, 0));
-
-  useFrame((_state, delta) => {
-    const light = lightRef.current;
-    if (!light) return;
-    target.current.set(mouse.x * range, height, mouse.y * range * 0.6);
-    const lerpFactor = 1 - Math.pow(0.001, delta);
-    light.position.lerp(target.current, lerpFactor);
-  });
-
-  return <pointLight ref={lightRef} color={color} intensity={intensity} distance={10} decay={2} />;
-}
-
-/** Líneas de carril estáticas pintadas como planos delgados emisivos. */
+/** Líneas decorativas estáticas a los costados del carro. */
 function StaticLaneLines() {
-  // 6 carriles a la izquierda y a la derecha del carro.
-  const stripes: Array<{ x: number; length: number; opacity: number }> = [];
-  for (let i = -3; i <= 3; i++) {
-    if (i === 0) continue;
-    stripes.push({ x: i * 1.6, length: 18, opacity: i % 2 === 0 ? 0.6 : 0.25 });
-  }
   return (
-    <group position={[0, 0.011, 0]}>
-      {stripes.map((s, idx) => (
-        <mesh key={idx} rotation-x={-Math.PI / 2} position={[s.x, 0, 0]}>
-          <planeGeometry args={[0.05, s.length]} />
-          <meshBasicMaterial color="#0AFFE0" transparent opacity={s.opacity * 0.6} />
+    <group position={[0, -0.84, 0]}>
+      {/* Carril izquierdo */}
+      <mesh rotation-x={-Math.PI / 2} position={[-2.4, 0, 0]}>
+        <planeGeometry args={[0.08, 24]} />
+        <meshBasicMaterial color="#0AFFE0" transparent opacity={0.3} />
+      </mesh>
+      {/* Carril derecho */}
+      <mesh rotation-x={-Math.PI / 2} position={[2.4, 0, 0]}>
+        <planeGeometry args={[0.08, 24]} />
+        <meshBasicMaterial color="#0AFFE0" transparent opacity={0.3} />
+      </mesh>
+      {/* Línea central discontinua (decorativa) */}
+      {Array.from({ length: 7 }).map((_, i) => (
+        <mesh
+          key={i}
+          rotation-x={-Math.PI / 2}
+          position={[0, 0, -10 + i * 3.2]}
+        >
+          <planeGeometry args={[0.05, 1.2]} />
+          <meshBasicMaterial color="#0AFFE0" transparent opacity={0.18} />
         </mesh>
       ))}
     </group>
@@ -112,39 +36,35 @@ function StaticLaneLines() {
 }
 
 export interface LoginSceneProps {
-  /** Color del cuerpo del carro. */
+  /** Tinte opcional del carro (se mezcla con los colores originales del .glb). */
   bodyColor?: string;
-  /** Tip de calidad inicial (la escena lo refina con `useAdaptiveQuality`). */
   className?: string;
 }
 
 /**
- * LoginScene — escena 3D para la página de login.
+ * LoginScene — escena 3D del login.
  *
  * Composición:
- *  - Carro `CarModel` central (click → burst).
- *  - Piso `MeshReflectorMaterial` (refleja el carro y los faros).
- *  - Carriles estáticos cyan.
- *  - Rim light superior violeta + faros + ambient tenue + mouse-follow cyan.
- *  - Mouse parallax en la cámara (CameraRig).
- *  - Post: Bloom intenso (threshold 0.5, intensity 1.5) + Vignette + ChromaticAberration leve.
+ *  - `Environment preset="night"` para reflections realistas en los materiales
+ *     metálicos del carro.
+ *  - `<CarModel>` (`/models/car.glb`) — bob idle + mouse parallax + click=burst.
+ *  - Piso `MeshReflectorMaterial` denso (resolution 512, mixStrength 15).
+ *  - Líneas estáticas decorativas (cyan, opacity 0.3).
+ *  - Luces: ambient 0.15 + point cyan superior + 2 point violetas traseros
+ *    + spot frontal blanco (faros simulados).
+ *  - Post: Bloom (luminanceThreshold 0.2, intensity 1.8) + Vignette.
  *
- * El postprocessing se apaga si `useAdaptiveQuality` reporta tier ≠ "high"
- * o si el usuario tiene `prefers-reduced-motion`.
+ * El postprocessing se apaga cuando `useAdaptiveQuality` reporta tier ≠ "high"
+ * o cuando el usuario tiene `prefers-reduced-motion`.
  */
-export function LoginScene({ bodyColor = '#7000FF', className }: LoginSceneProps) {
+export function LoginScene({ bodyColor, className }: LoginSceneProps) {
   const carRef = useRef<CarModelHandle>(null);
   const reduced = usePrefersReducedMotion();
-
-  const handleBurst = () => {
-    carRef.current?.burst();
-  };
 
   return (
     <div className={className} style={{ width: '100%', height: '100%' }}>
       <BrandCanvas
-        camera={{ position: [4, 2.1, 6], fov: 45 }}
-        onPointerDown={handleBurst}
+        camera={{ position: [4.2, 1.7, 5.5], fov: 38 }}
         background="#04020F"
       >
         <SceneBody bodyColor={bodyColor} carRef={carRef} reduced={reduced} />
@@ -158,85 +78,75 @@ function SceneBody({
   carRef,
   reduced,
 }: {
-  bodyColor: string;
+  bodyColor: string | undefined;
   carRef: React.RefObject<CarModelHandle>;
   reduced: boolean;
 }) {
   const quality = useAdaptiveQuality();
   const postprocessing = quality.postprocessing && !reduced;
-  const caOffset = useMemo(() => new THREE.Vector2(0.0008, 0.0008), []);
 
   return (
     <>
       <color attach="background" args={['#04020F']} />
-      <fog attach="fog" args={['#04020F', 10, 32]} />
+      {/* Fog más permisivo para que se vean las reflexiones del piso */}
+      <fog attach="fog" args={['#04020F', 12, 36]} />
 
-      {/* Luces base */}
-      <ambientLight intensity={0.35} />
-      <pointLight position={[0, 5, 0]} color="#7000FF" intensity={28} distance={18} decay={2} />
-      <pointLight position={[0, 1.2, 7]} color="#0AFFE0" intensity={12} distance={12} decay={2} />
-      <MouseFollowLight color="#0AFFE0" intensity={16} height={1.6} range={5} />
+      {/* Luces — perfil "noche con neón" */}
+      <ambientLight intensity={0.15} />
+      <pointLight position={[0, 4, 2]} color="#0AFFE0" intensity={3} distance={10} />
+      <pointLight position={[-3, 1, -2]} color="#7000FF" intensity={2} distance={8} />
+      <pointLight position={[3, 1, -2]} color="#7000FF" intensity={2} distance={8} />
+      {/* Faros simulados: spotLight frontal blanco */}
+      <spotLight
+        position={[0, 1, 3.5]}
+        target-position={[0, 0, 10]}
+        color="#FFFFFF"
+        intensity={4}
+        angle={0.25}
+        penumbra={0.4}
+        distance={20}
+      />
 
-      {/* Mouse parallax */}
-      <CameraRig basePosition={[4, 2.1, 6]} amplitudeDeg={10} lookAt={[0, 0.5, 0]} />
-
-      {/* Carriles estáticos en el piso */}
+      {/* Carriles decorativos */}
       <StaticLaneLines />
 
-      {/* Carro */}
+      {/* Carro (lazy chunk del .glb) */}
       <CarModel
         ref={carRef}
         bodyColor={bodyColor}
         bob={!reduced}
-        swing={!reduced}
+        position={[0, 0, 0]}
         onClick={() => carRef.current?.burst()}
       />
 
-      {/* Partículas sutiles flotantes */}
-      <ParticlesField
-        count={500}
-        particleScale={quality.particleScale}
-        radius={14}
-        size={0.035}
-        dual
-        opacity={0.55}
-      />
-
       {/* Piso reflectivo */}
-      <mesh rotation-x={-Math.PI / 2} position={[0, 0, 0]}>
-        <planeGeometry args={[50, 50]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.85, 0]}>
+        <planeGeometry args={[20, 20]} />
         <MeshReflectorMaterial
-          mirror={0.45}
           blur={[400, 100]}
-          resolution={1024}
+          resolution={512}
           mixBlur={1}
-          mixStrength={1.4}
-          roughness={0.85}
-          depthScale={0.6}
+          mixStrength={15}
+          roughness={1}
+          depthScale={1.2}
           minDepthThreshold={0.4}
           maxDepthThreshold={1.4}
-          color="#0A0717"
-          metalness={0.55}
+          color="#04020F"
+          metalness={0.8}
         />
       </mesh>
 
-      <Environment preset="city" />
+      <Environment preset="night" />
 
       {postprocessing ? (
         <EffectComposer multisampling={0}>
           <Bloom
-            intensity={1.5}
-            luminanceThreshold={0.5}
-            luminanceSmoothing={0.2}
+            luminanceThreshold={0.2}
+            luminanceSmoothing={0.9}
+            intensity={1.8}
             mipmapBlur
           />
-          <ChromaticAberration
-            offset={caOffset}
-            radialModulation={false}
-            modulationOffset={0}
-            blendFunction={BlendFunction.NORMAL}
-          />
-          <Vignette eskil={false} offset={0.2} darkness={0.7} />
+          <Vignette eskil={false} offset={0.3} darkness={0.8} />
         </EffectComposer>
       ) : null}
     </>

@@ -41,7 +41,6 @@ function SkyGradient() {
             float h = clamp((vWorld.y / 80.0) * 0.5 + 0.5, 0.0, 1.0);
             vec3 col = mix(uBottom, uMid, smoothstep(0.0, 0.55, h));
             col = mix(col, uTop, smoothstep(0.55, 1.0, h));
-            // Tinte cyan en el horizonte
             col += vec3(0.0, 0.06, 0.08) * (1.0 - abs(h - 0.5) * 2.0);
             gl_FragColor = vec4(col, 1.0);
           }
@@ -51,29 +50,25 @@ function SkyGradient() {
   );
 }
 
-/** Estrellas estáticas alrededor del jugador (puntos blancos/cyan). */
+/** Estrellas estáticas alrededor del jugador. */
 function Stars({ count = 1000 }: { count?: number }) {
-  const { positions, sizes } = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
+  const positions = useMemo(() => {
+    const pos = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const r = 60 + Math.random() * 20;
       const theta = Math.random() * Math.PI * 2;
-      // Sólo hemisferio superior y trasero (-z hacia adelante para el jugador).
-      const phi = Math.acos(Math.random() * 0.7); // 0..~45°
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.cos(phi);
-      positions[i * 3 + 2] = -Math.abs(r * Math.sin(phi) * Math.sin(theta)) - 5;
-      sizes[i] = 0.04 + Math.random() * 0.12;
+      const phi = Math.acos(Math.random() * 0.7);
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.cos(phi);
+      pos[i * 3 + 2] = -Math.abs(r * Math.sin(phi) * Math.sin(theta)) - 5;
     }
-    return { positions, sizes };
+    return pos;
   }, [count]);
 
   return (
     <points frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-size" args={[sizes, 1]} />
       </bufferGeometry>
       <pointsMaterial
         size={0.15}
@@ -88,10 +83,76 @@ function Stars({ count = 1000 }: { count?: number }) {
   );
 }
 
+const SEGMENT_LENGTH = 60;
+const SEGMENT_RECYCLE_THRESHOLD = 30;
+const SEGMENT_LOOP_DISTANCE = SEGMENT_LENGTH * 3;
+
 /**
- * Side props (postes / árboles low-poly) que viajan hacia la cámara.
- * Recicla los objetos cuando pasan detrás de la cámara reposicionándolos al
- * fondo (impl. estilo "object pool").
+ * RoadScroller — la carretera ahora se compone de 3 segmentos físicos que se
+ * mueven en world space y se reciclan cuando pasan la cámara. Esto evita el
+ * flickering/epilepsia que producía el scroll UV del shader a alta velocidad:
+ * el shader queda estático y la sensación de movimiento sale del transform
+ * de los meshes, que es estable bit-a-bit.
+ */
+function RoadScroller({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
+  const ref0 = useRef<THREE.Mesh>(null);
+  const ref1 = useRef<THREE.Mesh>(null);
+  const ref2 = useRef<THREE.Mesh>(null);
+  const refs = useMemo(() => [ref0, ref1, ref2], []);
+  // Z físico de cada segmento. Empezamos con los segmentos consecutivos
+  // detrás de la cámara para que aparezcan acercándose en cadena.
+  const positions = useRef<[number, number, number]>([
+    0,
+    -SEGMENT_LENGTH,
+    -SEGMENT_LENGTH * 2,
+  ]);
+
+  useFrame(() => {
+    const speed = speedRef.current;
+    const next: [number, number, number] = [...positions.current] as [
+      number,
+      number,
+      number,
+    ];
+    for (let i = 0; i < 3; i++) {
+      let newZ = next[i] + speed;
+      if (newZ > SEGMENT_RECYCLE_THRESHOLD) {
+        newZ -= SEGMENT_LOOP_DISTANCE;
+      }
+      const m = refs[i].current;
+      if (m) m.position.z = newZ;
+      next[i] = newZ;
+    }
+    positions.current = next;
+  });
+
+  return (
+    <>
+      {refs.map((ref, i) => (
+        <mesh
+          key={i}
+          ref={ref}
+          rotation-x={-Math.PI / 2}
+          position={[0, 0, positions.current[i]]}
+        >
+          <planeGeometry args={[40, SEGMENT_LENGTH, 1, 1]} />
+          {/* speed=0 → sin scroll UV (el movimiento real viene del mesh).
+              laneColor blanco para que el Bloom capture solo las líneas. */}
+          <RoadShader
+            speed={0}
+            lanes={6}
+            glowColor="#7000FF"
+            laneColor="#FFFFFF"
+          />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
+/**
+ * Side props (postes / árboles low-poly) que se reciclan en pool.
+ * Comparten el `speedRef` con la carretera para que el paralax sea coherente.
  */
 function SideProps({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
   const refs = useRef<THREE.Group[]>([]);
@@ -108,14 +169,15 @@ function SideProps({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
     }
     return arr;
   }, []);
+  const loopDistance = items.length * 14;
 
-  useFrame((_state, delta) => {
+  useFrame(() => {
     const speed = speedRef.current;
     refs.current.forEach((g) => {
       if (!g) return;
-      g.position.z += delta * speed;
-      if (g.position.z > 8) {
-        g.position.z -= items.length * 14;
+      g.position.z += speed;
+      if (g.position.z > SEGMENT_RECYCLE_THRESHOLD) {
+        g.position.z -= loopDistance;
       }
     });
   });
@@ -132,7 +194,6 @@ function SideProps({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
         >
           {it.type === 'pole' ? (
             <>
-              {/* Poste de luz futurista */}
               <mesh position={[0, 1.5, 0]}>
                 <cylinderGeometry args={[0.07, 0.07, 3, 8]} />
                 <meshStandardMaterial color="#1A1535" metalness={0.8} roughness={0.3} />
@@ -148,7 +209,6 @@ function SideProps({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
             </>
           ) : (
             <>
-              {/* Árbol low-poly */}
               <mesh position={[0, 0.45, 0]}>
                 <cylinderGeometry args={[0.18, 0.22, 0.9, 6]} />
                 <meshStandardMaterial color="#0A0717" metalness={0.1} roughness={0.95} />
@@ -170,26 +230,14 @@ function SideProps({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
 }
 
 /**
- * RoadScroller — plano largo con `RoadShader` cuyo `speed` se controla
- * desde fuera (ramp-up). El plano está fijo en el mundo: el efecto de
- * movimiento sale del scroll de UV del shader.
+ * useSpeedRamp — speed.current empieza en 0.03 y converge a 0.10 con lerp
+ * suave (NUNCA más rápido). Esto fija el techo de velocidad y elimina
+ * la epilepsia que producía la rampa anterior (hasta 1.6).
  */
-function RoadScroller({ speedRef }: { speedRef: React.MutableRefObject<number> }) {
-  return (
-    <mesh rotation-x={-Math.PI / 2} position={[0, 0, -40]}>
-      <planeGeometry args={[40, 200, 1, 1]} />
-      <RoadShader speedRef={speedRef} lanes={6} glowColor="#7000FF" laneColor="#0AFFE0" />
-    </mesh>
-  );
-}
-
-/** Hook que mantiene un ref con el speed acelerado de 0→target en `ramp` segundos. */
-function useSpeedRamp(target: number, ramp: number) {
-  const speedRef = useRef(0);
-  useFrame((_state, delta) => {
-    const t = speedRef.current;
-    if (t >= target) return;
-    speedRef.current = Math.min(target, t + (delta * target) / ramp);
+function useSpeedRamp(target = 0.1) {
+  const speedRef = useRef(0.03);
+  useFrame(() => {
+    speedRef.current += (target - speedRef.current) * 0.005;
   });
   return speedRef;
 }
@@ -197,13 +245,15 @@ function useSpeedRamp(target: number, ramp: number) {
 function SceneBody() {
   const reduced = usePrefersReducedMotion();
   const quality = useAdaptiveQuality();
-  const target = reduced ? 0.25 : 1.6;
-  const speedRef = useSpeedRamp(target, 3);
+  // Si el usuario prefiere reducir movimiento, casi detenemos el flujo.
+  const target = reduced ? 0.015 : 0.1;
+  const speedRef = useSpeedRamp(target);
 
   return (
     <>
       <color attach="background" args={['#04020F']} />
-      <fog attach="fog" args={['#04020F', 18, 90]} />
+      {/* Fog denso: ahoga el horizonte y hace invisible el join de segmentos */}
+      <fog attach="fog" args={['#04020F', 15, 70]} />
       <ambientLight intensity={0.5} />
       <pointLight position={[0, 6, -8]} intensity={28} color="#7000FF" distance={40} decay={2} />
       <pointLight position={[0, 1, -2]} intensity={6} color="#0AFFE0" distance={8} decay={2} />
@@ -215,7 +265,14 @@ function SceneBody() {
 
       {quality.postprocessing && !reduced ? (
         <EffectComposer multisampling={0}>
-          <Bloom intensity={1.2} luminanceThreshold={0.4} luminanceSmoothing={0.25} mipmapBlur />
+          {/* Bloom con intensity 0.5 y threshold alto → solo las líneas
+              blancas (laneColor #FFFFFF + emissive boost del shader) brillan. */}
+          <Bloom
+            intensity={0.5}
+            luminanceThreshold={0.6}
+            luminanceSmoothing={0.2}
+            mipmapBlur
+          />
           <Vignette eskil={false} offset={0.25} darkness={0.75} />
         </EffectComposer>
       ) : null}
@@ -229,9 +286,8 @@ export interface RegisterSceneProps {
 
 /**
  * RegisterScene — vista en primera persona desde el carro, viajando por
- * una carretera infinita. La cámara queda baja (altura 1.2) mirando al
- * horizonte, donde la luz violeta y las estrellas dan una atmósfera de
- * "viaje al amanecer".
+ * una carretera infinita compuesta de 3 segmentos físicos que se reciclan
+ * (sin scroll UV del shader, sin motion blur, velocidad acotada a 0.10).
  *
  * Componente client-only por usar shaders + postprocessing.
  */

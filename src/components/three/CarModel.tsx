@@ -1,66 +1,85 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
+import { useGLTF } from '@react-three/drei';
+import { useFrame, useThree } from '@react-three/fiber';
+import gsap from 'gsap';
 import * as THREE from 'three';
+
+const MODEL_URL = '/models/car.glb';
+
+// Pre-carga el modelo para evitar pop-in la primera vez que se monta la escena.
+useGLTF.preload(MODEL_URL);
 
 export interface CarModelHandle {
   /** Grupo raíz del carro (para timelines GSAP externas). */
   group: THREE.Group | null;
-  /** Inicia animación "arrancada": avanza y vuelve al punto de origen. */
+  /** Lanza la "arrancada": empuje en Z + spin de 360° sobre Y. */
   burst: () => void;
 }
 
 export interface CarModelProps {
-  /** Color del cuerpo. */
+  /** Tinte metálico que se aplica al cuerpo. Si el material original tenía color, lo respeta. */
   bodyColor?: string;
-  /** Color de los faros. */
-  headlightColor?: string;
-  /** Activa el bob (oscilación vertical) idle. */
+  /** Habilita bob vertical idle. Default true. */
   bob?: boolean;
-  /** Activa la rotación oscilante en Y. */
+  /**
+   * @deprecated mantenido por compatibilidad con el sandbox anterior.
+   * El swing del carro ahora lo controla el parallax del mouse.
+   */
   swing?: boolean;
-  /** Cuántos grados de oscilación Y (en radianes ya convertidos). */
-  swingAmplitude?: number;
-  /** Velocidad de rotación de las ruedas (rad/s). */
-  wheelSpeed?: number;
-  /** Posición base del carro. */
+  /** Tamaño "lógico" objetivo del modelo en unidades world (dim mayor). Default 2.5. */
+  targetSize?: number;
+  /** Posición base. */
   position?: [number, number, number];
-  /** Escala global. */
-  scale?: number;
-  /** Click handler externo (también puede dispararse vía `burst`). */
+  /** Click handler externo (el burst también puede llamarse vía `ref.burst()`). */
   onClick?: () => void;
 }
 
-const WHEEL_RADIUS = 0.32;
-const WHEEL_WIDTH = 0.22;
-
 /**
- * CarModel — carro construido con geometrías primitivas de Three.js
- * (sin GLTF). Cumple el spec del login:
- *   - Cuerpo, techo, ruedas, faros y parabrisas
- *   - Rim light + faros como point/spot lights
- *   - Idle: bob en Y + swing en Y
- *   - `burst()`: animación de arrancada controlada desde GSAP afuera
+ * CarModel — carga `public/models/car.glb` con `useGLTF`, re-materializa las
+ * mallas con `MeshStandardMaterial` metálico (respetando colores originales),
+ * y aplica:
  *
- * Llamar dentro de un `<Canvas>`.
+ *   - Centrado y normalización automática (Box3 → max dim → scale uniform).
+ *   - Bob suave en Y con `Math.sin(time)`.
+ *   - Mouse parallax leve (rotación Y / X) basado en el mouse global de window.
+ *   - Click → "arrancada" GSAP: empuje en Z + spin de 360° en Y.
+ *
+ * Expone un `ref` con `group` (para timelines externas) y `burst()` (para
+ * dispararse desde otros componentes — ej. el sandbox `/dev/three-test`).
  */
 export const CarModel = forwardRef<CarModelHandle, CarModelProps>(function CarModel(
-  {
-    bodyColor = '#7000FF',
-    headlightColor = '#0AFFE0',
-    bob = true,
-    swing = true,
-    swingAmplitude = (15 * Math.PI) / 180,
-    wheelSpeed = 6,
-    position = [0, WHEEL_RADIUS, 0],
-    scale = 1,
-    onClick,
-  },
+  { bodyColor, bob = true, targetSize = 2.5, position = [0, 0, 0], onClick },
   ref,
 ) {
+  const { scene } = useGLTF(MODEL_URL) as unknown as { scene: THREE.Group };
   const groupRef = useRef<THREE.Group>(null);
-  const wheelsRef = useRef<THREE.Group>(null);
-  const burstStateRef = useRef<{ active: boolean; t: number }>({ active: false, t: 0 });
-  const timeRef = useRef(0);
+  const targetRot = useRef({ x: 0, y: 0 });
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const { size } = useThree();
+
+  // Guardar handle de la timeline activa para limpiarla en unmount.
+  const tlRef = useRef<gsap.core.Timeline | null>(null);
+
+  const burst = () => {
+    const g = groupRef.current;
+    if (!g) return;
+    tlRef.current?.kill();
+    const baseZ = position[2];
+    const startRotY = g.rotation.y;
+    tlRef.current = gsap
+      .timeline()
+      .to(g.position, { z: baseZ + 1.5, duration: 0.3, ease: 'power2.in' })
+      .to(g.position, { z: baseZ, duration: 0.6, ease: 'power2.out' })
+      .to(
+        g.rotation,
+        {
+          y: startRotY + Math.PI * 2,
+          duration: 0.9,
+          ease: 'power2.inOut',
+        },
+        '<0.1',
+      );
+  };
 
   useImperativeHandle(
     ref,
@@ -68,199 +87,99 @@ export const CarModel = forwardRef<CarModelHandle, CarModelProps>(function CarMo
       get group() {
         return groupRef.current;
       },
-      burst: () => {
-        burstStateRef.current = { active: true, t: 0 };
-      },
+      burst,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
 
-  // Materiales se memorizan para que se compartan y `dispose` sea predecible.
-  const materials = useMemo(() => {
-    const body = new THREE.MeshStandardMaterial({
-      color: bodyColor,
-      metalness: 0.85,
-      roughness: 0.22,
-      envMapIntensity: 1.0,
-    });
-    const dark = new THREE.MeshStandardMaterial({
-      color: '#0A0717',
-      metalness: 0.4,
-      roughness: 0.6,
-    });
-    const tire = new THREE.MeshStandardMaterial({
-      color: '#08060F',
-      metalness: 0.1,
-      roughness: 0.95,
-    });
-    const rim = new THREE.MeshStandardMaterial({
-      color: '#1A1535',
-      metalness: 0.9,
-      roughness: 0.25,
-    });
-    const headlight = new THREE.MeshStandardMaterial({
-      color: headlightColor,
-      emissive: headlightColor,
-      emissiveIntensity: 3,
-      metalness: 0.2,
-      roughness: 0.1,
-    });
-    const tail = new THREE.MeshStandardMaterial({
-      color: '#FF2D7A',
-      emissive: '#FF2D7A',
-      emissiveIntensity: 1.5,
-    });
-    const glass = new THREE.MeshPhysicalMaterial({
-      color: '#0AFFE0',
-      transmission: 0.7,
-      thickness: 0.4,
-      roughness: 0.05,
-      metalness: 0,
-      transparent: true,
-      opacity: 0.55,
-      ior: 1.45,
-    });
-    return { body, dark, tire, rim, headlight, tail, glass };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Mouse global (usamos window porque el canvas puede ocupar sólo la mitad
+  // de la pantalla en el login y queremos que reaccione al mouse del page entero).
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      mouseRef.current.x = (e.clientX / size.width - 0.5) * 2;
+      mouseRef.current.y = -(e.clientY / size.height - 0.5) * 2;
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    return () => window.removeEventListener('mousemove', onMouseMove);
+  }, [size.width, size.height]);
 
-  // Mantener color/headlight reactivos.
-  materials.body.color.set(bodyColor);
-  materials.headlight.color.set(headlightColor);
-  materials.headlight.emissive.set(headlightColor);
+  // Re-materializar y normalizar el modelo. Guarda referencia a los materials
+  // y geometries creados para liberar GPU en unmount.
+  const created = useMemo(
+    () => ({ materials: [] as THREE.Material[], geometries: [] as THREE.BufferGeometry[] }),
+    [],
+  );
 
-  useFrame((_state, delta) => {
-    const g = groupRef.current;
-    const wheels = wheelsRef.current;
-    if (!g) return;
+  useEffect(() => {
+    if (!scene) return;
 
-    timeRef.current += delta;
-    const t = timeRef.current;
+    const tintColor = bodyColor ? new THREE.Color(bodyColor) : null;
 
-    // Idle: swing en Y
-    if (swing) {
-      g.rotation.y = Math.sin(t * 0.6) * swingAmplitude;
-    }
-    // Idle: bob en Y
-    if (bob) {
-      g.position.y = position[1] + Math.sin(t * 1.6) * 0.05;
-    }
+    scene.traverse((child) => {
+      if (!(child instanceof THREE.Mesh)) return;
 
-    // Burst: pequeña aceleración hacia +Z y vuelta
-    if (burstStateRef.current.active) {
-      burstStateRef.current.t += delta;
-      const bt = burstStateRef.current.t;
-      const duration = 0.8;
-      const p = Math.min(bt / duration, 1);
-      // ease cubic-bezier(0.16, 1, 0.3, 1) aproximado con out-cubic
-      const ease = 1 - Math.pow(1 - p, 3);
-      const goForward = ease * (1 - ease) * 4; // sube y baja en 0..1
-      g.position.z = position[2] + goForward * 1.6;
-      if (p >= 1) {
-        burstStateRef.current = { active: false, t: 0 };
-        g.position.z = position[2];
-      }
-    }
+      // Tomar el color del material original si existe; si no, fallback brand.
+      const original = child.material as THREE.Material | THREE.Material[] | undefined;
+      const sample = Array.isArray(original) ? original[0] : original;
+      const baseColor =
+        sample && 'color' in sample && sample.color instanceof THREE.Color
+          ? sample.color.clone()
+          : new THREE.Color('#7000FF');
 
-    if (wheels) {
-      wheels.children.forEach((wheel) => {
-        wheel.rotation.x += delta * wheelSpeed;
+      const finalColor = tintColor ? baseColor.lerp(tintColor, 0.5) : baseColor;
+
+      const mat = new THREE.MeshStandardMaterial({
+        color: finalColor,
+        metalness: 0.85,
+        roughness: 0.15,
+        envMapIntensity: 1.5,
       });
-    }
+      child.material = mat;
+      child.castShadow = true;
+      child.receiveShadow = true;
+      created.materials.push(mat);
+      if (child.geometry) {
+        created.geometries.push(child.geometry);
+      }
+    });
+
+    // Centrar y escalar uniformemente al tamaño deseado.
+    const box = new THREE.Box3().setFromObject(scene);
+    const center = box.getCenter(new THREE.Vector3());
+    const sizeBox = box.getSize(new THREE.Vector3());
+    const maxDim = Math.max(sizeBox.x, sizeBox.y, sizeBox.z) || 1;
+    const scale = targetSize / maxDim;
+    scene.scale.setScalar(scale);
+    scene.position.sub(center.multiplyScalar(scale));
+  }, [scene, bodyColor, targetSize, created]);
+
+  // Cleanup: disponer materials para liberar GPU al desmontar.
+  useEffect(() => {
+    return () => {
+      tlRef.current?.kill();
+      created.materials.forEach((m) => m.dispose());
+      // Las geometries vienen del .glb cacheado; NO las disponemos para que
+      // useGLTF pueda reusarlas si el modelo vuelve a montarse.
+    };
+  }, [created]);
+
+  // Idle bob + mouse parallax (lerp suave).
+  useFrame((state) => {
+    const g = groupRef.current;
+    if (!g) return;
+    const t = state.clock.getElapsedTime();
+    if (bob) g.position.y = position[1] + Math.sin(t * 0.7) * 0.06;
+
+    targetRot.current.y += (mouseRef.current.x * 0.3 - targetRot.current.y) * 0.05;
+    targetRot.current.x += (mouseRef.current.y * 0.1 - targetRot.current.x) * 0.05;
+    g.rotation.y = targetRot.current.y;
+    g.rotation.x = targetRot.current.x;
   });
 
-  // Helper para emitir hijos de las ruedas.
-  const wheelOffsets: Array<[number, number, number]> = [
-    [-0.95, 0, 1.2], // FL
-    [0.95, 0, 1.2], // FR
-    [-0.95, 0, -1.1], // RL
-    [0.95, 0, -1.1], // RR
-  ];
-
   return (
-    <group ref={groupRef} position={position} scale={scale} onClick={onClick}>
-      {/* Rim light arriba del carro */}
-      <pointLight position={[0, 2.2, 0]} color="#0AFFE0" intensity={6} distance={6} decay={2} />
-
-      {/* Cuerpo principal */}
-      <mesh castShadow receiveShadow material={materials.body}>
-        <boxGeometry args={[2.2, 0.65, 4.2]} />
-      </mesh>
-
-      {/* Fender flare (caja delgada para dar volumen) */}
-      <mesh position={[0, -0.18, 0]} material={materials.dark}>
-        <boxGeometry args={[2.25, 0.3, 4.25]} />
-      </mesh>
-
-      {/* Techo (más pequeño, ligeramente inclinado hacia atrás) */}
-      <mesh position={[0, 0.55, -0.2]} rotation-x={-0.04} material={materials.body}>
-        <boxGeometry args={[1.65, 0.55, 2.2]} />
-      </mesh>
-
-      {/* Parabrisas */}
-      <mesh position={[0, 0.55, 0.95]} rotation-x={-Math.PI / 4} material={materials.glass}>
-        <planeGeometry args={[1.5, 0.95]} />
-      </mesh>
-
-      {/* Luneta trasera */}
-      <mesh position={[0, 0.55, -1.32]} rotation-x={Math.PI / 4} material={materials.glass}>
-        <planeGeometry args={[1.5, 0.85]} />
-      </mesh>
-
-      {/* Faros delanteros (esferas pequeñas emisivas) */}
-      <mesh position={[-0.7, 0.05, 2.05]} material={materials.headlight}>
-        <sphereGeometry args={[0.16, 24, 24]} />
-      </mesh>
-      <mesh position={[0.7, 0.05, 2.05]} material={materials.headlight}>
-        <sphereGeometry args={[0.16, 24, 24]} />
-      </mesh>
-
-      {/* SpotLights de los faros hacia adelante + point cyan dentro */}
-      <pointLight position={[-0.7, 0.05, 2.1]} color={headlightColor} intensity={3} distance={2.5} decay={2} />
-      <pointLight position={[0.7, 0.05, 2.1]} color={headlightColor} intensity={3} distance={2.5} decay={2} />
-      <spotLight
-        position={[-0.7, 0.05, 2.1]}
-        target-position={[-0.7, -0.5, 6]}
-        color={headlightColor}
-        intensity={45}
-        angle={0.45}
-        penumbra={0.7}
-        distance={14}
-        decay={1.7}
-      />
-      <spotLight
-        position={[0.7, 0.05, 2.1]}
-        target-position={[0.7, -0.5, 6]}
-        color={headlightColor}
-        intensity={45}
-        angle={0.45}
-        penumbra={0.7}
-        distance={14}
-        decay={1.7}
-      />
-
-      {/* Stop traseros */}
-      <mesh position={[-0.7, 0.1, -2.05]} material={materials.tail}>
-        <boxGeometry args={[0.4, 0.1, 0.05]} />
-      </mesh>
-      <mesh position={[0.7, 0.1, -2.05]} material={materials.tail}>
-        <boxGeometry args={[0.4, 0.1, 0.05]} />
-      </mesh>
-
-      {/* Ruedas */}
-      <group ref={wheelsRef}>
-        {wheelOffsets.map((p, i) => (
-          <group key={i} position={p}>
-            <mesh rotation-z={Math.PI / 2} material={materials.tire}>
-              <cylinderGeometry args={[WHEEL_RADIUS, WHEEL_RADIUS, WHEEL_WIDTH, 24]} />
-            </mesh>
-            {/* Aro interior */}
-            <mesh rotation-z={Math.PI / 2} position={[0, 0, 0]} material={materials.rim}>
-              <cylinderGeometry args={[WHEEL_RADIUS * 0.55, WHEEL_RADIUS * 0.55, WHEEL_WIDTH * 1.02, 16]} />
-            </mesh>
-          </group>
-        ))}
-      </group>
+    <group ref={groupRef} position={position} onClick={onClick ?? burst}>
+      <primitive object={scene} />
     </group>
   );
 });

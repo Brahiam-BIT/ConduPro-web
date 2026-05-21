@@ -107,6 +107,18 @@ export default function RegisterPage() {
 
   return (
     <div className="theme-dynamic relative grid min-h-screen grid-cols-1 overflow-hidden bg-brand-dark lg:grid-cols-2">
+      {/* Botón "Volver al inicio" — flota sobre todo el layout */}
+      <Link
+        to="/"
+        className="group absolute left-5 top-5 z-50 inline-flex items-center gap-2 text-sm text-white/50 transition-colors duration-200 hover:text-brand-primary"
+      >
+        <ArrowLeft
+          size={16}
+          className="transition-transform duration-200 group-hover:-translate-x-1"
+        />
+        <span className="hidden sm:inline">Volver al inicio</span>
+      </Link>
+
       <aside className="relative hidden overflow-hidden lg:block">
         <Suspense fallback={<SceneFallback />}>
           <RegisterScene className="absolute inset-0" />

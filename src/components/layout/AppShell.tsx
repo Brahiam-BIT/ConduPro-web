@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { motion, useReducedMotion } from 'framer-motion';
 import {
   CalendarPlus,
   CalendarClock,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useAuth } from '@/hooks/useAuth';
+import { useWelcomeToast } from '@/hooks/useWelcomeToast';
 import { ROLES } from '@/constants/roles';
 import { ROUTES } from '@/constants/routes';
 import { Avatar } from '@/components/ui/Avatar';
@@ -63,6 +65,9 @@ export function AppShell() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+
+  // Toast "Bienvenido, {nombre} 👋" la primera vez por sesión.
+  useWelcomeToast();
 
   const items = user ? NAV_BY_ROLE[user.role] ?? [] : [];
   const userFullName = user ? `${user.firstName} ${user.lastName}` : 'Usuario';
@@ -111,7 +116,9 @@ export function AppShell() {
             <GuidedTourProvider>
               <div className="mx-auto w-full max-w-7xl">
                 <AppTopBar />
-                <Outlet />
+                <RouteFade routeKey={location.pathname}>
+                  <Outlet />
+                </RouteFade>
               </div>
             </GuidedTourProvider>
           </PageActionsProvider>
@@ -202,16 +209,28 @@ function Sidebar({
                   className={cn(
                     'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-body-sm font-medium transition-colors duration-150',
                     active
-                      ? 'bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-200'
+                      ? 'text-primary-700 dark:text-primary-200'
                       : 'text-surface-600 hover:bg-surface-100 hover:text-surface-800 dark:text-surface-300 dark:hover:bg-surface-800 dark:hover:text-surface-100',
                     collapsed && 'justify-center px-2',
                   )}
                 >
                   {active ? (
-                    <span
-                      aria-hidden
-                      className="absolute inset-y-1 left-0 w-1 rounded-r-full bg-primary-600"
-                    />
+                    <>
+                      {/* Fondo del item activo (se desliza entre rutas) */}
+                      <motion.span
+                        layoutId={mobile ? 'sidebar-active-bg-mobile' : 'sidebar-active-bg'}
+                        aria-hidden
+                        className="absolute inset-0 -z-10 rounded-lg bg-primary-50 dark:bg-primary-500/15"
+                        transition={{ type: 'spring', bounce: 0.18, duration: 0.45 }}
+                      />
+                      {/* Barrita lateral izquierda */}
+                      <motion.span
+                        layoutId={mobile ? 'sidebar-active-bar-mobile' : 'sidebar-active-bar'}
+                        aria-hidden
+                        className="absolute inset-y-1 left-0 w-1 rounded-r-full bg-primary-600"
+                        transition={{ type: 'spring', bounce: 0.18, duration: 0.45 }}
+                      />
+                    </>
                   ) : null}
                   <Icon className={cn('h-4 w-4 shrink-0', active && 'text-primary-600 dark:text-primary-300')} />
                   {!collapsed ? <span className="truncate">{item.label}</span> : null}
@@ -303,6 +322,25 @@ function MobileDrawer({ open, onClose, children }: { open: boolean; onClose: () 
         {children}
       </div>
     </div>
+  );
+}
+
+/**
+ * RouteFade — anima la entrada del contenido del Outlet cuando cambia la ruta.
+ * No usa AnimatePresence para no romper el comportamiento de React Router
+ * (que ya monta/desmonta) — sólo aplica un fade+y en mount con `key`.
+ */
+function RouteFade({ routeKey, children }: { routeKey: string; children: ReactNode }) {
+  const reduced = useReducedMotion();
+  if (reduced) return <>{children}</>;
+  return (
+    <motion.div
+      key={routeKey}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.16, 1, 0.3, 1] } }}
+    >
+      {children}
+    </motion.div>
   );
 }
 

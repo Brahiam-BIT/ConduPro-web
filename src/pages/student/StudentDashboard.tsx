@@ -8,6 +8,9 @@ import { Table, type TableColumn } from '@/components/ui/Table';
 import { NextClassCard } from '@/components/shared/ScheduleCard';
 import { ScheduleStatusBadge, ScheduleTypeBadge } from '@/components/shared/StatusBadge';
 import { ScheduleEmptyState } from '@/components/shared/ScheduleEmptyState';
+import { CountUpNumber } from '@/components/shared/CountUpNumber';
+import { MotionCard } from '@/components/shared/MotionCard';
+import { StaggerContainer, StaggerItem } from '@/components/shared/StaggerContainer';
 import { EMPTY_STUDENT_DASHBOARD } from '@/constants/dashboardDefaults';
 import { LicenseProgressCard } from '@/components/student/LicenseProgressCard';
 import { useMyEnrollments } from '@/hooks/useStudentEnrollments';
@@ -74,7 +77,7 @@ export default function StudentDashboard() {
   ];
 
   return (
-    <div className="flex flex-col gap-8">
+    <StaggerContainer className="flex flex-col gap-8">
       <PageHeader
         actions={
           <Link to={ROUTES.STUDENT.BOOK}>
@@ -122,7 +125,7 @@ export default function StudentDashboard() {
       ) : null}
 
       {/* KPI grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StaggerItem className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading ? (
           <>
             <Card variant="elevated" className="sm:col-span-2 lg:col-span-2">
@@ -153,40 +156,40 @@ export default function StudentDashboard() {
               )}
             </div>
 
-            <Card variant="elevated" padding="md">
+            <MotionCard variant="elevated" padding="md">
               <p className="text-label text-surface-500 dark:text-surface-400">Clases completadas</p>
               <p className="mt-2 text-display-sm text-surface-900 dark:text-surface-50">
-                {completedCount}
+                <CountUpNumber value={completedCount} />
               </p>
               <p className="text-caption text-surface-500 dark:text-surface-400">en total</p>
-            </Card>
+            </MotionCard>
 
-            <Card variant="elevated" padding="md">
+            <MotionCard variant="elevated" padding="md">
               <p className="text-label text-surface-500 dark:text-surface-400">Clases esta semana</p>
               <p className="mt-2 flex items-baseline gap-2">
                 <span className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {weekCount}
+                  <CountUpNumber value={weekCount} />
                 </span>
                 <BookOpen className="h-5 w-5 text-primary-600 dark:text-primary-400" aria-hidden />
               </p>
-            </Card>
+            </MotionCard>
 
-            <Card variant="elevated" padding="md">
+            <MotionCard variant="elevated" padding="md">
               <p className="text-label text-surface-500 dark:text-surface-400">Horas acumuladas</p>
               <p className="mt-2 flex items-baseline gap-2">
                 <span className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {totalHours}
+                  <CountUpNumber value={totalHours} />
                 </span>
                 <span className="text-body-sm text-surface-500">h</span>
                 <Clock className="ml-auto h-5 w-5 text-accent-500" aria-hidden />
               </p>
-            </Card>
+            </MotionCard>
           </>
         )}
-      </div>
+      </StaggerItem>
 
       {/* Historial reciente */}
-      <section className="flex flex-col gap-4">
+      <StaggerItem as="section" className="flex flex-col gap-4" delay={0.2}>
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-heading-md text-surface-900 dark:text-surface-50">Historial reciente</h2>
           <Link to={ROUTES.STUDENT.SCHEDULES}>
@@ -210,7 +213,7 @@ export default function StudentDashboard() {
             />
           }
         />
-      </section>
-    </div>
+      </StaggerItem>
+    </StaggerContainer>
   );
 }

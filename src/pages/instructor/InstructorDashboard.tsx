@@ -8,6 +8,9 @@ import { ParticipantInfoModal } from '@/components/shared/ParticipantInfoModal';
 import { WeeklyScheduleGrid } from '@/components/instructor/WeeklyScheduleGrid';
 import { WeekSchedulePickerModal } from '@/components/instructor/WeekSchedulePickerModal';
 import { QueryErrorBanner } from '@/components/shared/QueryErrorBanner';
+import { CountUpNumber } from '@/components/shared/CountUpNumber';
+import { MotionCard } from '@/components/shared/MotionCard';
+import { StaggerContainer, StaggerItem } from '@/components/shared/StaggerContainer';
 import { EMPTY_INSTRUCTOR_DASHBOARD } from '@/constants/dashboardDefaults';
 import {
   useInstructorDashboard,
@@ -69,12 +72,12 @@ export default function InstructorDashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-8">
+    <StaggerContainer className="flex flex-col gap-8">
       {isError ? (
         <QueryErrorBanner message="No pudimos cargar tu resumen. Intenta recargar la página." />
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <StaggerItem className="grid gap-4 lg:grid-cols-3">
         {/* Clases hoy */}
         <Card variant="elevated" padding="md" className="lg:col-span-2">
           <div className="mb-4 flex items-center gap-2">
@@ -135,40 +138,40 @@ export default function InstructorDashboard() {
             </>
           ) : (
             <>
-              <Card variant="elevated" padding="md">
+              <MotionCard variant="elevated" padding="md">
                 <div className="mb-2 flex items-center gap-2 text-surface-500 dark:text-surface-400">
                   <CalendarDays className="h-4 w-4" aria-hidden />
                   <span className="text-label">Esta semana</span>
                 </div>
                 <p className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {dashboard.weekTotal ?? 0}{' '}
+                  <CountUpNumber value={dashboard.weekTotal ?? 0} />{' '}
                   <span className="text-body-md font-normal text-surface-500">clases</span>
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-body-sm text-surface-600 dark:text-surface-400">
                   <Clock className="h-4 w-4" aria-hidden />
-                  {dashboard.weekHours ?? 0} horas impartidas
+                  <CountUpNumber value={dashboard.weekHours ?? 0} /> horas impartidas
                 </p>
-              </Card>
-              <Card variant="elevated" padding="md">
+              </MotionCard>
+              <MotionCard variant="elevated" padding="md">
                 <div className="mb-2 flex items-center gap-2 text-surface-500 dark:text-surface-400">
                   <CheckCircle2 className="h-4 w-4" aria-hidden />
                   <span className="text-label">Este mes</span>
                 </div>
                 <p className="text-display-sm text-surface-900 dark:text-surface-50">
-                  {dashboard.monthTotal ?? 0}{' '}
+                  <CountUpNumber value={dashboard.monthTotal ?? 0} />{' '}
                   <span className="text-body-md font-normal text-surface-500">impartidas</span>
                 </p>
                 <p className="mt-1 text-body-sm text-success-600 dark:text-success-500">
-                  {dashboard.monthCompleted ?? 0} completadas
+                  <CountUpNumber value={dashboard.monthCompleted ?? 0} /> completadas
                 </p>
-              </Card>
+              </MotionCard>
             </>
           )}
         </div>
-      </div>
+      </StaggerItem>
 
       {/* Mini calendario semanal */}
-      <section className="flex flex-col gap-4">
+      <StaggerItem as="section" className="flex flex-col gap-4" delay={0.2}>
         <h2 className="text-heading-md text-surface-900 dark:text-surface-50">
           Calendario de la semana
         </h2>
@@ -180,7 +183,7 @@ export default function InstructorDashboard() {
             onScheduleClick={handleWeekCellClick}
           />
         )}
-      </section>
+      </StaggerItem>
 
       <WeekSchedulePickerModal
         open={!!pickerSchedules?.length}
@@ -204,6 +207,6 @@ export default function InstructorDashboard() {
         onClose={() => setParticipant(null)}
         participant={participant}
       />
-    </div>
+    </StaggerContainer>
   );
 }

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion } from 'framer-motion';
-import { Lock, Mail } from 'lucide-react';
+import { ArrowLeft, Lock, Mail } from 'lucide-react';
 import gsap from 'gsap';
 import {
   FloatingField,
@@ -100,6 +100,18 @@ export default function LoginPage() {
 
   return (
     <div className="theme-dynamic relative grid min-h-screen grid-cols-1 overflow-hidden bg-brand-dark lg:grid-cols-2">
+      {/* Botón "Volver al inicio" — flota sobre todo el layout */}
+      <Link
+        to="/"
+        className="group absolute left-5 top-5 z-50 inline-flex items-center gap-2 text-sm text-white/50 transition-colors duration-200 hover:text-brand-primary"
+      >
+        <ArrowLeft
+          size={16}
+          className="transition-transform duration-200 group-hover:-translate-x-1"
+        />
+        <span className="hidden sm:inline">Volver al inicio</span>
+      </Link>
+
       {/* ─── Panel izquierdo — escena 3D ─── */}
       <aside className="relative hidden overflow-hidden lg:block">
         <Suspense fallback={<SceneFallback />}>
@@ -122,7 +134,9 @@ export default function LoginPage() {
             </h1>
             <p className="max-w-sm text-sm text-brand-light/70">
               Conduce, agenda, aprende. Toda tu academia en un solo lugar.
-              Haz click en el auto para arrancarlo.
+            </p>
+            <p className="animate-pulse text-center font-mono-brand text-xs tracking-[0.25em] text-brand-primary/50">
+              Haz clic en el auto para arrancarlo
             </p>
           </div>
 
