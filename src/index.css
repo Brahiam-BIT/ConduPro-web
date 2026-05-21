@@ -12,6 +12,43 @@
 @layer base {
   :root {
     color-scheme: light;
+    /* Semantic tokens — light (Apple) */
+    --cp-bg-primary: 255 255 255;
+    --cp-bg-secondary: 245 245 247;
+    --cp-bg-tertiary: 232 232 237;
+    --cp-text-primary: 29 29 31;
+    --cp-text-secondary: 110 110 115;
+    --cp-text-tertiary: 174 174 178;
+    --cp-border: 210 210 215;
+    --cp-surface-default: 251 251 253;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --cp-bg-primary: 28 28 30;
+    --cp-bg-secondary: 0 0 0;
+    --cp-bg-tertiary: 58 58 60;
+    --cp-text-primary: 245 245 247;
+    --cp-text-secondary: 174 174 178;
+    --cp-text-tertiary: 110 110 115;
+    --cp-border: 56 56 58;
+    --cp-surface-default: 28 28 30;
+  }
+
+  /*
+   * Páginas diseñadas solo en claro (landing, login, register).
+   * Fuerza tokens light aunque html tenga .dark (tema sistema/oscuro en app).
+   */
+  .dark .theme-light {
+    color-scheme: light;
+    --cp-bg-primary: 255 255 255;
+    --cp-bg-secondary: 245 245 247;
+    --cp-bg-tertiary: 232 232 237;
+    --cp-text-primary: 29 29 31;
+    --cp-text-secondary: 110 110 115;
+    --cp-text-tertiary: 174 174 178;
+    --cp-border: 210 210 215;
+    --cp-surface-default: 251 251 253;
   }
 
   html {
@@ -26,6 +63,10 @@
 
   ::selection {
     @apply bg-accent-100 text-accent-700;
+  }
+
+  .dark ::selection {
+    @apply bg-accent-900 text-accent-100;
   }
 
   *:focus-visible {
@@ -103,6 +144,15 @@
       transparent
     );
     animation: shimmer 1.6s infinite;
+  }
+
+  .dark .skeleton-shimmer::after {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.08),
+      transparent
+    );
   }
 
   @keyframes shimmer {

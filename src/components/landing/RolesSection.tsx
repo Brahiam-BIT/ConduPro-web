@@ -137,7 +137,7 @@ export function RolesSection() {
   const role = ROLES.find((r) => r.id === active) ?? ROLES[0]!;
 
   return (
-    <section id="roles" className="bg-white py-24 sm:py-32">
+    <section id="roles" className="bg-bg-primary py-24 sm:py-32">
       <div className="mx-auto max-w-6xl px-6 sm:px-10">
         <div className="mb-12 max-w-2xl">
           <p className="mb-3 text-sm font-medium uppercase tracking-wider text-accent">
@@ -185,7 +185,7 @@ export function RolesSection() {
             exit="exit"
             className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2"
           >
-            <div className="overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-border bg-bg-primary p-6 shadow-sm">
               <RoleIllustration role={role.id} />
             </div>
 

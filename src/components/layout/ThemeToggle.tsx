@@ -16,7 +16,7 @@ export function ThemeToggle() {
     <div
       role="radiogroup"
       aria-label="Tema"
-      className="inline-flex items-center gap-0.5 rounded-full border border-surface-200 bg-surface-50 p-0.5 dark:border-surface-800 dark:bg-surface-900"
+      className="inline-flex items-center gap-0.5 rounded-full border border-border bg-bg-secondary p-0.5"
     >
       {MODES.map(({ value, icon: Icon, label }) => {
         const isActive = mode === value;
@@ -32,7 +32,7 @@ export function ThemeToggle() {
               'inline-flex h-7 w-7 items-center justify-center rounded-full transition-colors duration-150',
               isActive
                 ? 'bg-primary-600 text-white shadow-sm'
-                : 'text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200',
+                : 'text-text-secondary hover:text-text-primary',
             )}
           >
             <Icon className="h-3.5 w-3.5" />

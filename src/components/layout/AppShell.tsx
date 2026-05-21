@@ -346,7 +346,7 @@ function RouteFade({ routeKey, children }: { routeKey: string; children: ReactNo
 
 function MobileNavbar({ onOpenMenu, userName }: { onOpenMenu: () => void; userName: string }) {
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-white/80 px-4 backdrop-blur-md lg:hidden">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-bg-primary/80 px-4 backdrop-blur-md lg:hidden">
       <div className="flex items-center gap-3">
         <button
           type="button"

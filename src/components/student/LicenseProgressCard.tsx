@@ -47,17 +47,21 @@ export function LicenseProgressCard({ progress, compact = false }: LicenseProgre
         <div className="flex flex-1 flex-col gap-2 text-body-sm">
           <div className="flex items-center gap-2">
             <BookOpen className="h-4 w-4 text-primary-600 dark:text-primary-400" aria-hidden />
-            <span>
+            <span className="text-surface-800 dark:text-surface-200">
               Teoría: {progress.theoryCompleted}/{progress.theoryRequired}
             </span>
-            <span className="text-caption text-surface-500">({progress.theoryPercent}%)</span>
+            <span className="text-caption text-surface-500 dark:text-surface-400">
+              ({progress.theoryPercent}%)
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <Car className="h-4 w-4 text-primary-600 dark:text-primary-400" aria-hidden />
-            <span>
+            <span className="text-surface-800 dark:text-surface-200">
               Práctica: {progress.practiceCompleted}/{progress.practiceRequired}
             </span>
-            <span className="text-caption text-surface-500">({progress.practicePercent}%)</span>
+            <span className="text-caption text-surface-500 dark:text-surface-400">
+              ({progress.practicePercent}%)
+            </span>
           </div>
         </div>
       </div>

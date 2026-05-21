@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ROUTES } from '@/constants/routes';
@@ -15,11 +15,20 @@ function SceneFallback() {
   return <div aria-hidden className="absolute inset-0 bg-hero-bg" />;
 }
 
-const FEATURE_BULLETS = [
-  'Agendamiento automático',
-  '3 roles integrados',
-  'Disponibilidad en tiempo real',
-];
+const FEATURE_HIGHLIGHTS = [
+  {
+    title: 'Un click, una clase',
+    line: 'Tus alumnos reservan sin llamar por teléfono.',
+  },
+  {
+    title: 'Todo el equipo, alineado',
+    line: 'Estudiante, instructor y admin en un solo panel.',
+  },
+  {
+    title: 'Horarios que no fallan',
+    line: 'Disponibilidad al instante. Cero dobles reservas.',
+  },
+] as const;
 
 /**
  * HeroSection — primer impacto de la landing.
@@ -35,6 +44,7 @@ const FEATURE_BULLETS = [
  * en cada frame; el canvas lo consume directamente en su `useFrame`.
  */
 export function HeroSection() {
+  const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const heroTextRef = useRef<HTMLDivElement>(null);
@@ -45,6 +55,14 @@ export function HeroSection() {
 
   // Ref consumido por <HeroScene/> dentro del Canvas.
   const sceneStateRef = useRef<HeroSceneState>({ progress: 0, isMobile: false });
+
+  /** Al volver desde login/register: scroll arriba, progress 0 y refresco de ScrollTrigger. */
+  useEffect(() => {
+    sceneStateRef.current.progress = 0;
+    window.scrollTo(0, 0);
+    const id = requestAnimationFrame(() => ScrollTrigger.refresh(true));
+    return () => cancelAnimationFrame(id);
+  }, [location.key]);
 
   // Detectar mobile.
   useEffect(() => {
@@ -69,7 +87,7 @@ export function HeroSection() {
     const ctx = gsap.context(() => {
       // Estado inicial del texto.
       gsap.set(featuresRef.current, { opacity: 0 });
-      gsap.set('.feature-bullet', { opacity: 0, x: -24 });
+      gsap.set('.feature-bullet', { opacity: 0, x: -48 });
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -88,7 +106,7 @@ export function HeroSection() {
         .to(ctaRef.current, { opacity: 0, y: -20, duration: 0.3 }, 0)
         // 30 → 70 %  aparecen los bullets desde la izquierda.
         .to(featuresRef.current, { opacity: 1, duration: 0.1 }, 0.3)
-        .to('.feature-bullet', { opacity: 1, x: 0, duration: 0.4, stagger: 0.08 }, 0.32)
+        .to('.feature-bullet', { opacity: 1, x: 0, duration: 0.5, stagger: 0.12 }, 0.32)
         // 70 → 100 %  fade-out de los bullets para preparar la siguiente sección.
         .to('.feature-bullet', { opacity: 0, y: -10, duration: 0.2 }, 0.78);
     }, containerRef);
@@ -109,17 +127,40 @@ export function HeroSection() {
       >
         {/* Canvas 3D */}
         <Suspense fallback={<SceneFallback />}>
-          <HeroScene className="absolute inset-0" stateRef={sceneStateRef} />
+          <HeroScene
+            key={location.key}
+            className="absolute inset-0"
+            stateRef={sceneStateRef}
+          />
         </Suspense>
 
-        {/* ─── Overlay HTML ───────────────────────────────────────── */}
-        <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center px-6 text-center">
+        {/* Scrim superior para el título */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-[1]"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.4) 22%, transparent 42%)',
+          }}
+        />
+        {/* Halo suave detrás del carro (lado derecho) para que no se pierda en negro */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-[1]"
+          style={{
+            background:
+              'radial-gradient(ellipse 55% 45% at 72% 58%, rgba(55,58,68,0.55) 0%, rgba(20,20,24,0.2) 45%, transparent 70%)',
+          }}
+        />
+
+        {/* ─── Overlay HTML — texto arriba, carro visible abajo ─── */}
+        <div className="pointer-events-none relative z-10 mx-auto flex h-full w-full max-w-6xl flex-col items-center px-6 pt-28 text-center sm:pt-32 md:pt-36">
           <div ref={heroTextRef} className="pointer-events-auto">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="text-balance text-6xl font-semibold tracking-tight text-white sm:text-7xl md:text-8xl"
+              className="text-balance text-5xl font-semibold tracking-tight text-white drop-shadow-[0_2px_24px_rgba(0,0,0,0.8)] sm:text-6xl md:text-7xl"
             >
               ConduPro
             </motion.h1>
@@ -127,7 +168,7 @@ export function HeroSection() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="mx-auto mt-6 max-w-2xl text-balance text-lg font-normal text-white/70 sm:text-xl"
+              className="mx-auto mt-5 max-w-xl text-balance text-base font-normal text-white/75 sm:text-lg"
             >
               Gestión inteligente para escuelas de conducción.
             </motion.p>
@@ -138,7 +179,7 @@ export function HeroSection() {
             >
               <Link
                 to={ROUTES.REGISTER}
-                className="group inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-text-primary transition-colors duration-200 hover:bg-bg-secondary"
+                className="group inline-flex h-11 items-center gap-2 rounded-full bg-bg-primary px-6 text-sm font-medium text-text-primary transition-colors duration-200 hover:bg-bg-secondary"
               >
                 Empezar gratis
                 <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -152,21 +193,23 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Bullets que aparecen al hacer scroll (escritorio) */}
+          {/* Highlights al hacer scroll (escritorio) */}
           {!isMobile && !reduced ? (
             <ul
               ref={featuresRef}
-              className="pointer-events-none absolute left-6 top-1/2 -translate-y-1/2 space-y-5 text-left sm:left-12 md:left-20"
+              className="pointer-events-none absolute left-6 top-1/2 max-w-md -translate-y-1/2 space-y-10 text-left sm:left-10 md:left-16 lg:left-20"
             >
-              {FEATURE_BULLETS.map((b) => (
-                <li
-                  key={b}
-                  className="feature-bullet flex items-center gap-3 text-base font-medium text-white sm:text-lg md:text-xl"
-                >
-                  <span className="grid size-6 place-items-center rounded-full bg-accent text-white">
-                    <Check className="size-3.5" strokeWidth={3} />
+              {FEATURE_HIGHLIGHTS.map((item, i) => (
+                <li key={item.title} className="feature-bullet space-y-2">
+                  <span className="font-mono text-xs font-medium uppercase tracking-[0.2em] text-accent">
+                    0{i + 1}
                   </span>
-                  {b}
+                  <p className="text-2xl font-semibold leading-tight tracking-tight text-white sm:text-3xl md:text-4xl">
+                    {item.title}
+                  </p>
+                  <p className="text-base leading-relaxed text-white/60 sm:text-lg">
+                    {item.line}
+                  </p>
                 </li>
               ))}
             </ul>

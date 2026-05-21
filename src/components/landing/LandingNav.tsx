@@ -95,8 +95,8 @@ export function LandingNav() {
         className={[
           'fixed inset-x-0 top-0 z-50 transition-colors duration-200',
           scrolled
-            ? 'border-b border-border bg-white/80 backdrop-blur-md'
-            : 'border-b border-transparent bg-white/60 backdrop-blur-md',
+            ? 'border-b border-border bg-bg-primary/80 backdrop-blur-md'
+            : 'border-b border-transparent bg-bg-primary/60 backdrop-blur-md',
         ].join(' ')}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12">
@@ -133,7 +133,7 @@ export function LandingNav() {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-xl border border-border bg-white text-text-primary md:hidden"
+            className="grid size-10 place-items-center rounded-xl border border-border bg-bg-primary text-text-primary md:hidden"
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={open}
           >
@@ -149,7 +149,7 @@ export function LandingNav() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1, transition: { duration: 0.2 } }}
             exit={{ opacity: 0, transition: { duration: 0.15 } }}
-            className="fixed inset-0 z-40 flex flex-col bg-white px-6 pt-24 md:hidden"
+            className="fixed inset-0 z-40 flex flex-col bg-bg-primary px-6 pt-24 md:hidden"
           >
             <nav className="flex flex-col gap-5">
               {NAV_LINKS.map((l, idx) => (

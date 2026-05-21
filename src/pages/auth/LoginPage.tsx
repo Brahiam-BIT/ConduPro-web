@@ -71,7 +71,7 @@ export default function LoginPage() {
     touchedFields[field] ? errors[field]?.message : undefined;
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-bg-secondary px-4 py-10">
+    <div className="theme-light relative flex min-h-screen items-center justify-center bg-bg-secondary px-4 py-10">
       {/* Botón "Volver" */}
       <Link
         to="/"
@@ -88,7 +88,7 @@ export default function LoginPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: EASE }}
-        className="w-full max-w-sm rounded-3xl bg-white p-10 shadow-lg"
+        className="w-full max-w-sm rounded-3xl bg-bg-primary p-10 shadow-lg"
       >
         {/* Logo */}
         <div className="mb-7 flex items-center gap-2.5">

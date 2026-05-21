@@ -47,7 +47,7 @@ export function AppTopBar() {
               size="sm"
               iconLeft={<CircleHelp className="h-4 w-4" />}
               onClick={startTour}
-              className="border-primary-200 bg-white/80 dark:border-primary-800/50 dark:bg-surface-900/80"
+              className="border-primary-200 bg-bg-primary/80 dark:border-primary-800/50"
             >
               Tutorial guiado
             </Button>

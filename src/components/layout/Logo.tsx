@@ -30,9 +30,8 @@ export function Logo({
         <circle cx="32" cy="44" r="3" fill="white" />
       </svg>
       {withText ? (
-        <span className="text-heading-sm font-extrabold tracking-tight text-surface-800 dark:text-surface-50">
-          Condu
-          <span className="bg-gradient-brand bg-clip-text text-transparent">Pro</span>
+        <span className="text-heading-sm font-extrabold tracking-tight text-text-primary">
+          Condu<span className="text-accent">Pro</span>
         </span>
       ) : null}
     </span>

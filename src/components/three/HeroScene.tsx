@@ -1,84 +1,111 @@
-import { useRef } from 'react';
-import { Environment } from '@react-three/drei';
-import { EffectComposer, Bloom } from '@react-three/postprocessing';
+import { useEffect, useRef } from 'react';
+import { Environment, MeshReflectorMaterial } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import BrandCanvas from './BrandCanvas';
 import CarModel, { type CarModelHandle } from './CarModel';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-
-/**
- * Estado interpolado que envía `HeroSection` al carro a través del
- * `useFrame` interno. Los valores van de "estado A" a "estado B" en
- * función del scroll global (manejado por GSAP ScrollTrigger fuera del canvas).
- */
 export interface HeroSceneState {
-  /** Progreso del scroll dentro del hero (0..1). */
   progress: number;
-  /** Si el dispositivo es mobile (< 768px) — desactiva la coreografía. */
   isMobile: boolean;
 }
 
 const lerp = THREE.MathUtils.lerp;
 
-/** Clamp helper para sub-rangos del scroll. */
 function sub(p: number, from: number, to: number) {
   return THREE.MathUtils.clamp((p - from) / (to - from), 0, 1);
 }
 
-/**
- * CarChoreography — aplica las transformaciones cinematográficas al carro y
- * a la cámara según el progress del scroll.
- *
- * Tres tramos:
- *   0–30 %   zoom-in dramático (scale 1.0 → 1.8, rotY −15° → 0°, cam z 5 → 3.2)
- *   30–70 %  el carro se va a la derecha (x 0 → 2.5, rotY 0° → 20°, scale 1.8 → 1.4)
- *   70–100 % salida hacia abajo (y 0 → −1, opacity 1 → 0)
- *
- * En mobile la coreografía se desactiva — el carro queda en su estado inicial
- * con una rotación idle muy suave.
- */
+function ToneMappingSetup() {
+  const { gl } = useThree();
+  useEffect(() => {
+    gl.toneMapping = THREE.ACESFilmicToneMapping;
+    gl.toneMappingExposure = 1.05;
+    gl.outputColorSpace = THREE.SRGBColorSpace;
+  }, [gl]);
+  return null;
+}
+
+/** Piso oscuro reflectante — define silueta del carro y separa del fondo negro. */
+function HeroFloor() {
+  return (
+    <mesh rotation-x={-Math.PI / 2} position={[0, -1.05, 0]}>
+      <planeGeometry args={[24, 24]} />
+      <MeshReflectorMaterial
+        blur={[300, 80]}
+        resolution={512}
+        mixBlur={0.8}
+        mixStrength={2.5}
+        roughness={0.92}
+        depthScale={0.6}
+        minDepthThreshold={0.4}
+        maxDepthThreshold={1.2}
+        color="#0c0c0e"
+        metalness={0.35}
+        mirror={0.15}
+      />
+    </mesh>
+  );
+}
+
 function CarChoreography({ stateRef }: { stateRef: React.MutableRefObject<HeroSceneState> }) {
   const carRef = useRef<CarModelHandle>(null);
+  const keyRef = useRef<THREE.PointLight>(null);
   const { camera } = useThree();
   const opacityRef = useRef(1);
-  // Posición/escala objetivo — actualizadas cada frame en función del scroll.
-  const targetPos = useRef(new THREE.Vector3(0, 0, 0));
+  const targetPos = useRef(new THREE.Vector3(0, -0.5, 0));
+  const didResetOpacity = useRef(false);
+
+  const resetCarOpacity = (group: THREE.Group) => {
+    opacityRef.current = 1;
+    group.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        const mats = Array.isArray(child.material) ? child.material : [child.material];
+        mats.forEach((m) => {
+          if (!(m instanceof THREE.MeshStandardMaterial)) return;
+          m.opacity = 1;
+          m.transparent = false;
+          m.depthWrite = true;
+        });
+      }
+    });
+  };
 
   useFrame(() => {
     const { progress, isMobile } = stateRef.current;
     const group = carRef.current?.group;
     if (!group) return;
 
+    if (!didResetOpacity.current) {
+      didResetOpacity.current = true;
+      resetCarOpacity(group);
+    }
+
+    const key = keyRef.current;
+    if (key) {
+      key.position.set(group.position.x + 2.5, 2.8, group.position.z + 3.5);
+    }
+
     if (isMobile) {
-      // Idle suave en mobile (sin scroll choreography).
       const t = performance.now() / 1000;
-      group.rotation.y = THREE.MathUtils.degToRad(-15) + Math.sin(t * 0.4) * 0.05;
-      group.scale.setScalar(1);
-      group.position.set(0, 0, 0);
-      camera.position.set(0, 0, 5);
-      camera.lookAt(0, 0, 0);
+      group.rotation.y = THREE.MathUtils.degToRad(-18) + Math.sin(t * 0.4) * 0.04;
+      group.scale.setScalar(1.15);
+      group.position.set(0, -0.5, 0);
+      camera.position.set(0, 0.25, 5.2);
+      camera.lookAt(0, -0.15, 0);
       return;
     }
 
-    // Sub-rangos.
-    const a = sub(progress, 0, 0.3); // zoom in
-    const b = sub(progress, 0.3, 0.7); // movimiento a la derecha
-    const c = sub(progress, 0.7, 1.0); // salida
+    const a = sub(progress, 0, 0.3);
+    const b = sub(progress, 0.3, 0.7);
+    const c = sub(progress, 0.7, 1.0);
 
-    // Rotación Y: -15° → 0° → +20°.
     const rotY =
-      lerp(THREE.MathUtils.degToRad(-15), 0, a) +
-      lerp(0, THREE.MathUtils.degToRad(20), b);
-    // Escala: 1.0 → 1.8 → 1.4.
-    const scale = lerp(1.0, 1.8, a) - lerp(0, 0.4, b);
-    // Posición X: 0 → 2.5 en el segundo tramo.
-    const posX = lerp(0, 2.5, b);
-    // Posición Y: salida hacia abajo en el último tramo.
-    const posY = lerp(0, -1, c);
-    // Cámara Z: 5 → 3.2 (zoom in real, no sólo escala).
-    const camZ = lerp(5, 3.2, a);
-    // Opacity (fade-out final).
+      lerp(THREE.MathUtils.degToRad(-18), 0, a) +
+      lerp(0, THREE.MathUtils.degToRad(22), b);
+    const scale = lerp(1.0, 1.5, a) - lerp(0, 0.2, b);
+    const posX = lerp(0, 2.4, b);
+    const posY = lerp(-0.5, -0.5 - 0.8, c);
+    const camZ = lerp(5.2, 4.0, a);
     const opacity = lerp(1, 0, c);
 
     group.rotation.y = rotY;
@@ -86,10 +113,9 @@ function CarChoreography({ stateRef }: { stateRef: React.MutableRefObject<HeroSc
     targetPos.current.set(posX, posY, 0);
     group.position.lerp(targetPos.current, 0.18);
 
-    camera.position.set(0, 0.4, camZ);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 0.3, camZ);
+    camera.lookAt(group.position.x * 0.3, -0.1, 0);
 
-    // Opacity de todo el group (atravesando los materiales del .glb).
     if (opacity !== opacityRef.current) {
       opacityRef.current = opacity;
       group.traverse((child) => {
@@ -103,63 +129,48 @@ function CarChoreography({ stateRef }: { stateRef: React.MutableRefObject<HeroSc
     }
   });
 
-  return <CarModel ref={carRef} bodyColor="#1C1C1E" idle={false} />;
+  return (
+    <>
+      <pointLight ref={keyRef} intensity={1.8} color="#f5f8ff" distance={14} decay={2} />
+      <CarModel
+        ref={carRef}
+        bodyColor="#35353A"
+        targetSize={2.85}
+        position={[0, -0.5, 0]}
+        idle={false}
+        variant="hero"
+      />
+    </>
+  );
 }
 
 export interface HeroSceneProps {
-  /**
-   * Ref que el padre actualiza con el progreso del scroll. El canvas lo lee
-   * en `useFrame` para mantener el ciclo de render fuera de React.
-   */
   stateRef: React.MutableRefObject<HeroSceneState>;
   className?: string;
 }
 
-/**
- * HeroScene — escena 3D del hero, estilo Apple product shot.
- *
- *  - Fondo negro puro (#000).
- *  - Iluminación cinematográfica de 3 puntos:
- *      key light (directional desde arriba-izquierda)
- *      rim light (point trasero derecho)
- *      fill light (point inferior)
- *  - `Environment preset="studio"` para reflejos limpios sobre el grafito.
- *  - Bloom muy sutil (threshold 0.8, intensity 0.3) sólo para bordes brillantes.
- *  - El carro lo coreografía `CarChoreography` a partir del `stateRef`.
- */
 export function HeroScene({ stateRef, className }: HeroSceneProps) {
-  const reduced = usePrefersReducedMotion();
-
   return (
     <div className={className} style={{ width: '100%', height: '100%' }}>
       <BrandCanvas
-        camera={{ position: [0, 0.4, 5], fov: 32, near: 0.1, far: 50 }}
+        camera={{ position: [0, 0.3, 5.2], fov: 32, near: 0.1, far: 50 }}
         background="#000000"
+        gl={{ antialias: true, alpha: false }}
       >
+        <ToneMappingSetup />
         <color attach="background" args={['#000000']} />
+        <fog attach="fog" args={['#000000', 12, 28]} />
 
-        {/* Key light (desde arriba-izquierda) */}
-        <directionalLight
-          position={[-3, 4, 2]}
-          intensity={1.2}
-          color="#FFFFFF"
-          castShadow
-        />
-        {/* Rim light (separa el carro del fondo) */}
-        <pointLight position={[2, 1, -3]} intensity={0.6} color="#FFFFFF" />
-        {/* Fill light desde abajo */}
-        <pointLight position={[0, -2, 1]} intensity={0.15} color="#FFFFFF" />
-        <ambientLight intensity={0.2} />
+        <ambientLight intensity={0.4} color="#b8bcc8" />
+        <directionalLight position={[-5, 8, 5]} intensity={1.1} color="#ffffff" />
+        <directionalLight position={[6, 3, -3]} intensity={0.55} color="#7eb8ff" />
+        <directionalLight position={[0, 1, 8]} intensity={0.45} color="#e8e8ed" />
+        <pointLight position={[-2, 2, 3]} intensity={0.6} color="#ffffff" distance={12} />
 
-        <Environment preset="studio" />
+        <Environment preset="studio" environmentIntensity={0.75} />
 
+        <HeroFloor />
         <CarChoreography stateRef={stateRef} />
-
-        {!reduced ? (
-          <EffectComposer multisampling={0}>
-            <Bloom intensity={0.3} luminanceThreshold={0.8} luminanceSmoothing={0.2} mipmapBlur />
-          </EffectComposer>
-        ) : null}
       </BrandCanvas>
     </div>
   );

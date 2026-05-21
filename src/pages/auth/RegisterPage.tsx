@@ -110,7 +110,7 @@ export default function RegisterPage() {
 
   return (
     <div
-      className="relative flex min-h-screen items-center justify-center px-4 py-10"
+      className="theme-light relative flex min-h-screen items-center justify-center px-4 py-10"
       style={{
         background:
           'radial-gradient(ellipse at 60% 0%, #E8F0FE 0%, #F5F5F7 40%, #FFFFFF 100%)',
@@ -132,7 +132,7 @@ export default function RegisterPage() {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: EASE }}
-        className="w-full max-w-md rounded-3xl bg-white p-10 shadow-lg"
+        className="w-full max-w-md rounded-3xl bg-bg-primary p-10 shadow-lg"
       >
         {/* Logo */}
         <div className="mb-6 flex items-center gap-2.5">

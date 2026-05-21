@@ -91,7 +91,7 @@ export function FeaturesSection() {
               animate={inView || reduced ? { opacity: 1, y: 0 } : undefined}
               transition={{ duration: 0.4, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }}
               whileHover={reduced ? undefined : { y: -2 }}
-              className="rounded-2xl border border-border bg-white p-6 shadow-sm transition-shadow duration-150 hover:shadow-md"
+              className="rounded-2xl border border-border bg-bg-primary p-6 shadow-sm transition-shadow duration-150 hover:shadow-md"
             >
               <div className="mb-5 grid size-10 place-items-center rounded-xl bg-bg-secondary text-text-primary">
                 <Icon className="size-5" />

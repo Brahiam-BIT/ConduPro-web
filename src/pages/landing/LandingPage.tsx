@@ -34,7 +34,7 @@ export default function LandingPage() {
   }, [user, navigate]);
 
   return (
-    <div className="min-h-screen bg-bg-primary text-text-primary">
+    <div className="theme-light min-h-screen bg-bg-primary text-text-primary">
       <LandingNav />
       <main>
         <HeroSection />

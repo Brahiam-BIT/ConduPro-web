@@ -15,9 +15,9 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const VARIANT_MAP: Record<CardVariant, string> = {
-  default: 'bg-white border border-border',
-  elevated: 'bg-white border border-border shadow-sm',
-  glass: 'bg-white/80 backdrop-blur-md border border-border shadow-sm',
+  default: 'border border-border bg-bg-primary',
+  elevated: 'border border-border bg-bg-primary shadow-sm',
+  glass: 'border border-border bg-bg-primary/80 shadow-sm backdrop-blur-md',
 };
 
 const PADDING_MAP = {

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { applyThemeMode, type ThemeMode } from '@/lib/theme';
 
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type { ThemeMode };
 
 interface ThemeState {
   mode: ThemeMode;
@@ -13,7 +14,10 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
       mode: 'system',
-      setMode: (mode) => set({ mode }),
+      setMode: (mode) => {
+        set({ mode });
+        applyThemeMode(mode);
+      },
       toggle: () => {
         const current = get().mode;
         const resolved =
@@ -22,7 +26,9 @@ export const useThemeStore = create<ThemeState>()(
               ? 'dark'
               : 'light'
             : current;
-        set({ mode: resolved === 'dark' ? 'light' : 'dark' });
+        const next: ThemeMode = resolved === 'dark' ? 'light' : 'dark';
+        set({ mode: next });
+        applyThemeMode(next);
       },
     }),
     {

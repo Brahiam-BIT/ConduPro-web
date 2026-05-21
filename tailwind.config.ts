@@ -22,17 +22,17 @@ const config: Config = {
       colors: {
         // ─── New Apple semantic tokens ─────────────────────────────
         bg: {
-          primary: '#FFFFFF',
-          secondary: '#F5F5F7',
-          tertiary: '#E8E8ED',
+          primary: 'rgb(var(--cp-bg-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--cp-bg-secondary) / <alpha-value>)',
+          tertiary: 'rgb(var(--cp-bg-tertiary) / <alpha-value>)',
         },
         text: {
-          primary: '#1D1D1F',
-          secondary: '#6E6E73',
-          tertiary: '#AEAEB2',
+          primary: 'rgb(var(--cp-text-primary) / <alpha-value>)',
+          secondary: 'rgb(var(--cp-text-secondary) / <alpha-value>)',
+          tertiary: 'rgb(var(--cp-text-tertiary) / <alpha-value>)',
         },
         border: {
-          DEFAULT: '#D2D2D7',
+          DEFAULT: 'rgb(var(--cp-border) / <alpha-value>)',
         },
         hero: {
           bg: '#000000',
@@ -62,7 +62,7 @@ const config: Config = {
         // DEFAULT is the new card surface (#FBFBFD). Scales reassigned to a
         // neutral Apple-gray ladder for legacy `bg-surface-*` callers.
         surface: {
-          DEFAULT: '#FBFBFD',
+          DEFAULT: 'rgb(var(--cp-surface-default) / <alpha-value>)',
           50: '#FFFFFF',
           100: '#FBFBFD',
           200: '#F5F5F7',

@@ -49,7 +49,7 @@ export function ShowcaseSection() {
         </div>
 
         <div ref={mockupRef}>
-          <div className="overflow-hidden rounded-3xl border border-border bg-white shadow-lg">
+          <div className="overflow-hidden rounded-3xl border border-border bg-bg-primary shadow-lg">
             {/* Top bar */}
             <div className="flex items-center justify-between border-b border-border bg-bg-secondary px-5 py-3">
               <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export function ShowcaseSection() {
                   ].map((k) => (
                     <div
                       key={k.label}
-                      className="rounded-xl border border-border bg-white p-4"
+                      className="rounded-xl border border-border bg-bg-primary p-4"
                     >
                       <p className="text-xs font-medium text-text-secondary">{k.label}</p>
                       <p className="mt-1.5 text-2xl font-semibold text-text-primary">{k.value}</p>
@@ -108,7 +108,7 @@ export function ShowcaseSection() {
                   ))}
                 </div>
 
-                <div className="rounded-xl border border-border bg-white p-5">
+                <div className="rounded-xl border border-border bg-bg-primary p-5">
                   <div className="mb-3 flex items-center justify-between">
                     <p className="text-sm font-semibold text-text-primary">Clases por día</p>
                     <span className="text-xs text-text-secondary">Últimos 14 días</span>

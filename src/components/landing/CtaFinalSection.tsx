@@ -19,7 +19,7 @@ export function CtaFinalSection() {
         <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:gap-3">
           <Link
             to={ROUTES.REGISTER}
-            className="group inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-text-primary transition-colors duration-150 hover:bg-bg-secondary"
+            className="group inline-flex h-11 items-center gap-2 rounded-full bg-bg-primary px-6 text-sm font-medium text-text-primary transition-colors duration-150 hover:bg-bg-secondary"
           >
             Empezar gratis
             <ArrowRight className="size-4 transition-transform duration-150 group-hover:translate-x-0.5" />

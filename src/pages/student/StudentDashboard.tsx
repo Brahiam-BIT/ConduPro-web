@@ -114,7 +114,7 @@ export default function StudentDashboard() {
             <p className="text-heading-sm text-surface-800 dark:text-surface-100">
               Empieza tu licencia de conducción
             </p>
-            <p className="mt-1 text-body-sm text-surface-500">
+            <p className="mt-1 text-body-sm text-surface-500 dark:text-surface-400">
               Matricúlate en A1, B1, C1 u otra categoría para seguir teoría y práctica.
             </p>
           </div>
@@ -180,7 +180,7 @@ export default function StudentDashboard() {
                 <span className="text-display-sm text-surface-900 dark:text-surface-50">
                   <CountUpNumber value={totalHours} />
                 </span>
-                <span className="text-body-sm text-surface-500">h</span>
+                <span className="text-body-sm text-surface-500 dark:text-surface-400">h</span>
                 <Clock className="ml-auto h-5 w-5 text-accent-500" aria-hidden />
               </p>
             </MotionCard>
