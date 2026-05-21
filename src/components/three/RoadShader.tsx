@@ -1,12 +1,19 @@
 import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import type { MutableRefObject } from 'react';
 
 export interface RoadShaderProps {
   /** Tamaño del plano [width, length]. */
   size?: [number, number];
   /** Velocidad del scroll de las líneas (positivo = hacia la cámara). */
   speed?: number;
+  /**
+   * Ref que provee la velocidad en vivo. Tiene prioridad sobre `speed`.
+   * Útil cuando la velocidad se anima fuera del ciclo de render de React
+   * (ramp-up, GSAP, etc).
+   */
+  speedRef?: MutableRefObject<number>;
   /** Color del asfalto. */
   asphaltColor?: string;
   /** Color de las líneas centrales. */
@@ -104,6 +111,7 @@ const fragmentShader = /* glsl */ `
  */
 export function RoadShader({
   speed = 0.6,
+  speedRef,
   asphaltColor = '#04020F',
   laneColor = '#0AFFE0',
   glowColor = '#7000FF',
@@ -131,8 +139,9 @@ export function RoadShader({
     const mat = matRef.current;
     if (!mat) return;
     const u = mat.uniforms as Record<string, { value: unknown }>;
+    const liveSpeed = speedRef ? speedRef.current : speed;
     u.uTime!.value = (u.uTime!.value as number) + delta;
-    u.uSpeed!.value = speed;
+    u.uSpeed!.value = liveSpeed;
     u.uLanes!.value = lanes;
     u.uOpacity!.value = opacity;
     (u.uAsphalt!.value as THREE.Color).set(asphaltColor);
