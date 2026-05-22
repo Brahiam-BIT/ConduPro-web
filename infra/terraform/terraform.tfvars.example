@@ -1,0 +1,4 @@
+aws_region          = "us-east-1"
+project_name        = "condupro-web"
+github_repository   = "Brahiam-BIT/ConduPro-web"
+github_branch       = "main"

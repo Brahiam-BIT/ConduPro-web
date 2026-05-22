@@ -44,9 +44,80 @@ Copia `.env.example` a `.env.local` y ajusta:
 VITE_API_URL=http://localhost:3000
 ```
 
+En producción, GitHub Actions compila con `VITE_API_URL=http://18.223.229.175` (ver [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)).
+
+## Despliegue (S3 + GitHub Actions)
+
+Hosting estático HTTP en **S3 Static Website** (sin CloudFront), desplegado automáticamente en cada push a `main`.
+
+### Requisitos
+
+- Cuenta AWS con permisos para S3 e IAM
+- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.5
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) configurado (`aws configure`)
+
+### 1. Provisionar infraestructura (una vez)
+
+```bash
+cd infra/terraform
+cp terraform.tfvars.example terraform.tfvars
+# Edita terraform.tfvars si cambias región o repositorio GitHub
+terraform init
+terraform apply
+```
+
+Anota los outputs:
+
+| Output Terraform | Uso en GitHub |
+|------------------|---------------|
+| `github_actions_role_arn` | Secret `AWS_ROLE_ARN` |
+| `bucket_name` | Variable `S3_BUCKET` |
+| `aws_region` | Variable `AWS_REGION` |
+| `website_endpoint` | URL pública del frontend |
+
+### 2. Configurar GitHub
+
+En el repositorio: **Settings → Secrets and variables → Actions**
+
+| Nombre | Tipo | Valor |
+|--------|------|-------|
+| `AWS_ROLE_ARN` | Secret | output `github_actions_role_arn` |
+| `AWS_REGION` | Variable | ej. `us-east-1` |
+| `S3_BUCKET` | Variable | output `bucket_name` |
+
+### 3. CORS en el backend
+
+El frontend en S3 llama al API en `http://18.223.229.175`. El navegador enviará el origen del sitio web, por ejemplo:
+
+`http://condupro-web-xxxxxxxx.s3-website-us-east-1.amazonaws.com`
+
+En el NestJS de ese servidor, permite ese origen en CORS (métodos `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` y los headers que use Axios, incluido `Authorization`). Sin esto, login y peticiones autenticadas fallarán aunque el deploy sea correcto.
+
+Usa la URL exacta del output `website_endpoint` (sin barra final).
+
+### 4. Publicar
+
+Haz push o merge a `main`. El workflow [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) ejecuta `npm run build` y sube `dist/` al bucket.
+
+### 5. Verificar
+
+1. Abre `website_endpoint` del output de Terraform.
+2. Prueba login contra el API de producción.
+3. Navega directamente a una ruta (ej. `/login`) para confirmar el fallback SPA (`index.html` como error document).
+
+### Notas
+
+- Sitio y API usan **HTTP** (sin mixed content).
+- El bucket es de lectura pública; la escritura solo la tiene el rol IAM de GitHub Actions (OIDC).
+- Si `terraform apply` falla porque el proveedor OIDC de GitHub ya existe en la cuenta, importa el recurso existente o elimina el duplicado según tu caso.
+
 ## Estructura
 
 ```
+infra/
+  terraform/    S3 static website + IAM OIDC para GitHub Actions
+.github/
+  workflows/    CI/CD (deploy en push a main)
 src/
   api/          Funciones de fetch tipadas (un archivo por dominio)
   components/
