@@ -11,11 +11,23 @@ const NAV_LINKS = [
 ] as const;
 
 /** Logo "ConduPro" minimalista — ícono volante en azul accent + wordmark. */
-export function BrandMark({ size = 24, withText = true }: { size?: number; withText?: boolean }) {
+export function BrandMark({
+  size = 24,
+  withText = true,
+  light = false,
+}: {
+  size?: number;
+  withText?: boolean;
+  /** Wordmark claro para nav sobre fondo oscuro (hero). */
+  light?: boolean;
+}) {
   return (
     <Link
       to="/"
-      className="inline-flex items-center gap-2.5 text-text-primary no-underline"
+      className={[
+        'inline-flex items-center gap-2.5 no-underline',
+        light ? 'text-white' : 'text-text-primary',
+      ].join(' ')}
       aria-label="ConduPro"
     >
       <span
@@ -54,20 +66,33 @@ function SteeringIcon(props: React.SVGProps<SVGSVGElement>) {
 /**
  * LandingNav — top bar minimalista (estilo Apple).
  *
- * - Fondo `white/80` + `backdrop-blur` siempre (el hero es negro y el contraste
- *   funciona; las secciones posteriores son blancas y la barra se funde).
- * - Borde inferior sutil; sin gradientes, sin glow.
+ * - Sobre el hero negro: vidrio oscuro + texto claro.
+ * - Tras el hero (secciones blancas): vidrio claro + texto oscuro.
  * - Mobile: drawer fullscreen blanco con Framer Motion.
  */
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false);
+  const [overHero, setOverHero] = useState(true);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const hero = document.getElementById('hero');
+
+    const onScroll = () => {
+      setScrolled(window.scrollY > 12);
+      if (hero) {
+        const heroEnd = hero.offsetTop + hero.offsetHeight;
+        setOverHero(window.scrollY < heroEnd - 72);
+      }
+    };
+
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener('resize', onScroll);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -89,18 +114,24 @@ export function LandingNav() {
     setOpen(false);
   };
 
+  const onDarkHero = overHero;
+
   return (
     <>
       <header
         className={[
-          'fixed inset-x-0 top-0 z-50 transition-colors duration-200',
-          scrolled
-            ? 'border-b border-border bg-bg-primary/80 backdrop-blur-md'
-            : 'border-b border-transparent bg-bg-primary/60 backdrop-blur-md',
+          'fixed inset-x-0 top-0 z-50 transition-[background-color,border-color,box-shadow] duration-300',
+          onDarkHero
+            ? scrolled
+              ? 'border-b border-white/10 bg-black/55 shadow-[0_1px_0_rgba(255,255,255,0.06)_inset] backdrop-blur-xl'
+              : 'border-b border-white/[0.07] bg-black/25 backdrop-blur-xl'
+            : scrolled
+              ? 'border-b border-border bg-bg-primary/90 shadow-sm backdrop-blur-md'
+              : 'border-b border-transparent bg-bg-primary/75 backdrop-blur-md',
         ].join(' ')}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-12">
-          <BrandMark />
+          <BrandMark light={onDarkHero} />
 
           <nav className="hidden items-center gap-8 md:flex">
             {NAV_LINKS.map((l) => (
@@ -108,7 +139,12 @@ export function LandingNav() {
                 key={l.href}
                 href={l.href}
                 onClick={(e) => handleAnchor(e, l.href)}
-                className="text-sm font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary"
+                className={[
+                  'text-sm font-medium transition-colors duration-150',
+                  onDarkHero
+                    ? 'text-white/70 hover:text-white'
+                    : 'text-text-secondary hover:text-text-primary',
+                ].join(' ')}
               >
                 {l.label}
               </a>
@@ -118,13 +154,18 @@ export function LandingNav() {
           <div className="hidden items-center gap-2 md:flex">
             <Link
               to={ROUTES.LOGIN}
-              className="rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary"
+              className={[
+                'rounded-full px-4 py-2 text-sm font-medium transition-colors duration-150',
+                onDarkHero
+                  ? 'text-white/75 hover:text-white'
+                  : 'text-text-secondary hover:text-text-primary',
+              ].join(' ')}
             >
               Iniciar sesión
             </Link>
             <Link
               to={ROUTES.REGISTER}
-              className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-white transition-colors duration-150 hover:bg-accent-hover"
+              className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-white shadow-[0_2px_12px_rgba(0,113,227,0.35)] transition-colors duration-150 hover:bg-accent-hover"
             >
               Empezar gratis
             </Link>
@@ -133,7 +174,12 @@ export function LandingNav() {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="grid size-10 place-items-center rounded-xl border border-border bg-bg-primary text-text-primary md:hidden"
+            className={[
+              'grid size-10 place-items-center rounded-xl border transition-colors duration-150 md:hidden',
+              onDarkHero
+                ? 'border-white/15 bg-white/10 text-white hover:bg-white/15'
+                : 'border-border bg-bg-primary text-text-primary',
+            ].join(' ')}
             aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
             aria-expanded={open}
           >
